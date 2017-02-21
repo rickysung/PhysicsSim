@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="T6JUMw" name="PhysicsSim" projectType="guiapp" version="1.0.0"
+              bundleIdentifier="com.yourcompany.PhysicsSim" includeBinaryInAppConfig="1"
+              jucerVersion="4.3.0">
+  <MAINGROUP id="Vc2Ney" name="PhysicsSim">
+    <GROUP id="{11E7D4EF-A901-87AC-EEA4-5A82F14921E2}" name="Source">
+      <FILE id="LPm4g1" name="PhysicsContainer.cpp" compile="1" resource="0"
+            file="Source/PhysicsContainer.cpp"/>
+      <FILE id="FyDMGI" name="PhysicsContainer.h" compile="0" resource="0"
+            file="Source/PhysicsContainer.h"/>
+      <GROUP id="{74143CA1-C394-92E4-7A77-039F8948D3AF}" name="New Group">
+        <FILE id="ZpZk6O" name="BaseObject.cpp" compile="1" resource="0" file="Source/BaseObject.cpp"/>
+        <FILE id="c9TJH5" name="BaseObject.h" compile="0" resource="0" file="Source/BaseObject.h"/>
+        <FILE id="coLxL6" name="RigidBody.cpp" compile="1" resource="0" file="Source/RigidBody.cpp"/>
+        <FILE id="ZY8PDz" name="RigidBody.h" compile="0" resource="0" file="Source/RigidBody.h"/>
+      </GROUP>
+      <FILE id="NYqn19" name="MainComponent.cpp" compile="1" resource="0"
+            file="Source/MainComponent.cpp"/>
+      <FILE id="YUtv2c" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
+      <FILE id="mvhz6V" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
+    </GROUP>
+  </MAINGROUP>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX">
+      <CONFIGURATIONS>
+        <CONFIGURATION name="Debug" isDebug="1" optimisation="1" targetName="PhysicsSim"/>
+        <CONFIGURATION name="Release" isDebug="0" optimisation="3" targetName="PhysicsSim"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_core" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_events" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_cryptography" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_video" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_opengl" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../gworks/guce/modules"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+    <VS2015 targetFolder="Builds/VisualStudio2015">
+      <CONFIGURATIONS>
+        <CONFIGURATION name="Debug" winWarningLevel="4" generateManifest="1" winArchitecture="32-bit"
+                       isDebug="1" optimisation="1" targetName="PhysicsSim"/>
+        <CONFIGURATION name="Release" winWarningLevel="4" generateManifest="1" winArchitecture="32-bit"
+                       isDebug="0" optimisation="3" targetName="PhysicsSim"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_core" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_events" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_cryptography" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_video" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_opengl" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../gworks/guce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../gworks/guce/modules"/>
+      </MODULEPATHS>
+    </VS2015>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_cryptography" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_opengl" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_video" showAllCode="1" useLocalCopy="0"/>
+  </MODULES>
+  <JUCEOPTIONS/>
+</JUCERPROJECT>
