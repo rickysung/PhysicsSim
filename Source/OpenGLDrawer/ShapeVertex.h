@@ -10,16 +10,14 @@
 
 #ifndef SHAPEVERTEX_H_INCLUDED
 #define SHAPEVERTEX_H_INCLUDED
-
+#include "WavefrontObjParser.h"
 struct Vertex
 {
     float position[3];
     float normal[3];
     float colour[4];
     float texCoord[2];
-    float aedposition[3];
 };
-
 struct ShapeVertex
 {
     ShapeVertex(){}
@@ -69,8 +67,7 @@ struct ShapeVertex
                 {x1, y1, z1},
                 {norm[i].x, norm[i].y, norm[i].z},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5, 0.5},
-                {v1.x, v1.y, v1.z}
+                {0.5, 0.5}
             };
             vertices.add(vert);
         }
@@ -81,8 +78,7 @@ struct ShapeVertex
                 {x2, y2, z2},
                 {norm[i].x, norm[i].y, norm[i].z},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5, 0.5},
-                {v2.x, v2.y, v2.z}
+                {0.5, 0.5}
             };
             vertices.add(vert);
         }
@@ -143,8 +139,7 @@ struct ShapeVertex
                 {p1.x, p1.y, p1.z},
                 {norm[i].x, norm[i].y, norm[i].z},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5, 0.5},
-                {0,0,1}
+                {0.5, 0.5}
             };
             vertices.add(vert);
         }
@@ -155,8 +150,7 @@ struct ShapeVertex
                 {p2.x, p2.y, p2.z},
                 {norm[i].x, norm[i].y, norm[i].z},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5, 0.5},
-                {0,0,1}
+                {0.5, 0.5}
             };
             vertices.add(vert);
         }
@@ -253,11 +247,72 @@ protected:
         
         context.extensions.glVertexAttribPointer (3, 2, GL_FLOAT, GL_FALSE, sizeof (Vertex), (GLvoid*) (sizeof (float) * 10));
         context.extensions.glEnableVertexAttribArray (3);
-        
-        context.extensions.glVertexAttribPointer (4, 3, GL_FLOAT, GL_FALSE, sizeof (Vertex), (GLvoid*) (sizeof (float) * 12));
-        context.extensions.glEnableVertexAttribArray (4);
-        
     }
+};
+
+struct WavefrontVertex : ShapeVertex
+{
+    WavefrontVertex(WavefrontObjFile::Mesh& m, Colour c) : mesh(m), colour(c)
+    {
+    }
+    void createVertexListFromMesh (const WavefrontObjFile::Mesh& mesh)
+    {
+        const float scale = 0.05f;
+        WavefrontObjFile::TextureCoord defaultTexCoord = { 0.5f, 0.5f };
+        WavefrontObjFile::Vertex defaultNormal = { 0.5f, 0.5f, 0.5f };
+        //Colour colour = Colours::lightsalmon;
+        for (int i = 0; i < mesh.vertices.size(); ++i)
+        {
+            int triangle_index = i/3;
+            int idx;
+            Vector one;
+            Vector two;
+            Vector three;
+            Vector norm;
+            idx = triangle_index * 3 + i%3;
+            const WavefrontObjFile::Vertex& v1 = mesh.vertices.getReference (idx);
+            idx = triangle_index * 3 + (i+1)%3;
+            const WavefrontObjFile::Vertex& v2 = mesh.vertices.getReference (idx>=mesh.vertices.size()?(idx-1):idx);
+            idx = triangle_index * 3 + (i+2)%3;
+            const WavefrontObjFile::Vertex& v3 = mesh.vertices.getReference (idx>=mesh.vertices.size()?(idx-2):idx);
+            one = Vector(v1.x, v1.y, v1.z);
+            two = Vector(v2.x, v2.y, v2.z);
+            three = Vector(v3.x, v3.y, v3.z);
+            norm = (three-one) ^ (two-one);
+            if((norm+one).length()<one.length())
+                norm = -norm;
+            defaultNormal = {norm.x, norm.y, norm.z};
+            const WavefrontObjFile::Vertex& n
+            = i < mesh.normals.size() ? mesh.normals.getReference (i) : defaultNormal;
+            
+            const WavefrontObjFile::TextureCoord& tc
+            = i < mesh.textureCoords.size() ? mesh.textureCoords.getReference (i) : defaultTexCoord;
+            
+            Vertex vert =
+            {
+                { scale * v1.x, scale * v1.y, scale * v1.z, },
+                { scale * n.x, scale * n.y, scale * n.z, },
+                { colour.getFloatRed(), colour.getFloatGreen(), colour.getFloatBlue(), colour.getFloatAlpha() },
+                { tc.x, tc.y }
+            };
+            vertices.add (vert);
+        }
+    }
+    void initShape(OpenGLContext& context, float cof1 = 0, float cof2 = 0, float cof3 = 0) override
+    {
+        //WavefrontObjFile::Mesh& mesh = shapeFile.modelObjects.getUnchecked(2)->mesh;
+        context.extensions.glGenVertexArrays(1, &shapeVAO);
+        context.extensions.glGenBuffers (1, &shapeVBO);
+        context.extensions.glGenBuffers (1, &shapeEBO);
+        context.extensions.glBindVertexArray(shapeVAO);
+        createVertexListFromMesh(mesh);
+        putData(context, vertices, mesh.indices);
+        enableVertexArray(context);
+        context.extensions.glBindVertexArray(0);
+        vertexSize = mesh.indices.size();
+    }
+    Colour colour;
+    WavefrontObjFile::Mesh& mesh;
 };
 struct CubeVertex : ShapeVertex
 {
@@ -266,120 +321,120 @@ struct CubeVertex : ShapeVertex
         Vertex vert;
         Colour g = Colour(GRID_LINE);
         int cnt = 0;
-        vert = {{1, 1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, 1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{1, -1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, -1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{-1, -1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        indecies.add(cnt++);
-        indecies.add(cnt++);
-        indecies.add(cnt++);
-        vert = {{-1, -1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        vert = {{-1, 1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        vert = {{1, 1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{-1, -1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
         indecies.add(cnt++);
         indecies.add(cnt++);
         indecies.add(cnt++);
-        
-        vert = {{1, 1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{-1, -1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{1, -1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{-1, 1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{-1, -1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, 1, -1},{0, 0, -1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
         indecies.add(cnt++);
         indecies.add(cnt++);
         indecies.add(cnt++);
         
-        vert = {{-1, -1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, 1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{-1, 1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, -1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{1, 1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        indecies.add(cnt++);
-        indecies.add(cnt++);
-        indecies.add(cnt++);
-        
-        vert = {{1, -1, 1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        vert = {{1, -1, -1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        vert = {{-1, -1, -1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{-1, -1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
         indecies.add(cnt++);
         indecies.add(cnt++);
         indecies.add(cnt++);
         
-        vert = {{-1, -1, -1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{-1, -1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{-1, -1, 1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{-1, 1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{1, -1, 1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        indecies.add(cnt++);
-        indecies.add(cnt++);
-        indecies.add(cnt++);
-        
-        vert = {{1, 1, 1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        vert = {{1, 1, -1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        vert = {{-1, 1, -1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, 1, 1},{0, 0, 1},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
         indecies.add(cnt++);
         indecies.add(cnt++);
         indecies.add(cnt++);
         
-        vert = {{-1, 1, -1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, -1, 1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{-1, 1, 1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, -1, -1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{1, 1, 1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        indecies.add(cnt++);
-        indecies.add(cnt++);
-        indecies.add(cnt++);
-        
-        vert = {{1, 1, 1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        vert = {{1, 1, -1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        vert = {{1, -1, -1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{-1, -1, -1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
         indecies.add(cnt++);
         indecies.add(cnt++);
         indecies.add(cnt++);
         
-        vert = {{1, -1, -1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{-1, -1, -1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{1, -1, 1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{-1, -1, 1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{1, 1, 1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        indecies.add(cnt++);
-        indecies.add(cnt++);
-        indecies.add(cnt++);
-        
-        vert = {{-1, 1, 1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        vert = {{-1, 1, -1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
-        vertices.add(vert);
-        vert = {{-1, -1, -1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, -1, 1},{0, -1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
         indecies.add(cnt++);
         indecies.add(cnt++);
         indecies.add(cnt++);
         
-        vert = {{-1, -1, -1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, 1, 1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{-1, -1, 1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{1, 1, -1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
-        vert = {{-1, 1, 1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5},{0, 0, 1}};
+        vert = {{-1, 1, -1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        indecies.add(cnt++);
+        indecies.add(cnt++);
+        indecies.add(cnt++);
+        
+        vert = {{-1, 1, -1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        vert = {{-1, 1, 1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        vert = {{1, 1, 1},{0, 1, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        indecies.add(cnt++);
+        indecies.add(cnt++);
+        indecies.add(cnt++);
+        
+        vert = {{1, 1, 1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        vert = {{1, 1, -1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        vert = {{1, -1, -1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        indecies.add(cnt++);
+        indecies.add(cnt++);
+        indecies.add(cnt++);
+        
+        vert = {{1, -1, -1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        vert = {{1, -1, 1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        vert = {{1, 1, 1},{1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        indecies.add(cnt++);
+        indecies.add(cnt++);
+        indecies.add(cnt++);
+        
+        vert = {{-1, 1, 1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        vert = {{-1, 1, -1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        vert = {{-1, -1, -1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        indecies.add(cnt++);
+        indecies.add(cnt++);
+        indecies.add(cnt++);
+        
+        vert = {{-1, -1, -1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        vert = {{-1, -1, 1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
+        vertices.add(vert);
+        vert = {{-1, 1, 1},{-1, 0, 0},{g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},{0.5, 0.5}};
         vertices.add(vert);
         indecies.add(cnt++);
         indecies.add(cnt++);
@@ -405,8 +460,7 @@ struct CursorVertex : ShapeVertex
             {0, 0, 0},
             {0, 0, 1},
             {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {0.5, 0.5},
-            {0, 0, 1}
+            {0.5, 0.5}
         };
         vertices.add(vert);
         indecies.add(0);
@@ -414,8 +468,7 @@ struct CursorVertex : ShapeVertex
             {200, 0, 200},
             {0, 0, 1},
             {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {0.5, 0.5},
-            {M_PI_4, 0, 1}
+            {0.5, 0.5}
         };
         vertices.add(vert);
         indecies.add(1);
@@ -423,8 +476,7 @@ struct CursorVertex : ShapeVertex
             {200, 200, 200},
             {0, 0, 1},
             {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {0.5, 0.5},
-            {M_PI_4, M_PI_4, 1}
+            {0.5, 0.5}
         };
         vertices.add(vert);
         indecies.add(2);
@@ -447,15 +499,13 @@ struct CursorVertex : ShapeVertex
             {p.x, 0, p.z},
             {0, 0, 1},
             {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {0.5, 0.5},
-            {aed.x, 0, aed.z}
+            {0.5, 0.5}
         };
         pos = {
             {p.x, p.y, p.z},
             {0, 0, 1},
             {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {0.5, 0.5},
-            {aed.x, aed.y, aed.z}
+            {0.5, 0.5}
         };
         context.extensions.glBindVertexArray(shapeVAO);
         context.extensions.glBindBuffer(GL_ARRAY_BUFFER, shapeVBO);
@@ -528,8 +578,7 @@ struct SphereGridVertex : ShapeVertex
                     {cof1*std::cos(elv) * std::sin(azi), cof1*std::sin(elv), cof1*std::cos(elv)*std::cos(azi)},
                     {std::cos(elv) * std::sin(azi), std::cos(elv), std::cos(elv)*std::cos(azi)},
                     {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                    {v, u},
-                    {azi, elv, cof1}
+                    {v, u}
                 };
                 vertices.add(vert);
                 idx[i][j] = cnt++;
@@ -592,8 +641,7 @@ struct SphereVertex : ShapeVertex
                     {cof1*std::cos(elv) * std::sin(azi), cof1*std::sin(elv), cof1*std::cos(elv)*std::cos(azi)},
                     {std::cos(elv) * std::sin(azi), std::sin(elv), std::cos(elv)*std::cos(azi)},
                     {1.0, 1.0, 1.0, 1.0},
-                    {v, u},
-                    {azi, elv, cof1}
+                    {v, u}
                 };
                 vertices.add(vert);
                 idx[i][j] = cnt++;
@@ -654,8 +702,7 @@ struct AmbisonicSphereVertex : ShapeVertex
                     {ce*sa, se, ce*ca},
                     {ce*sa, se, ce*ca},
                     {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                    {v, u},
-                    {azi, elv, 1}
+                    {v, u}
                 };
                 vertices.add(vert);
                 idx[i][j] = cnt++;
@@ -747,8 +794,7 @@ struct FlatEllipseVertex : ShapeVertex
                 {rad * std::cos(ang),rad * std::sin(ang),-thick},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector(rad * std::cos(ang),rad * std::sin(ang),thick));
             vert = {
@@ -757,8 +803,7 @@ struct FlatEllipseVertex : ShapeVertex
                 //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector((rad-thick) * std::cos(ang),(rad-thick) * std::sin(ang), thick));
             vert = {
@@ -767,16 +812,14 @@ struct FlatEllipseVertex : ShapeVertex
                 //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector((rad-thick) * std::cos(ang), (rad-thick) * std::sin(ang), -thick));
             vert = {
                 {(rad-thick) * std::cos(ang), (rad-thick) * std::sin(ang), -thick},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             
             bt = i-1;
@@ -825,8 +868,7 @@ struct EllipseBandVertex : public ShapeVertex
                 {rad * std::cos(ang),rad * std::sin(ang),-thick},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector(rad * std::cos(ang),rad * std::sin(ang),thick));
             vert = {
@@ -835,8 +877,7 @@ struct EllipseBandVertex : public ShapeVertex
                 //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector((rad-thick) * std::cos(ang),(rad-thick) * std::sin(ang), thick));
             vert = {
@@ -845,16 +886,14 @@ struct EllipseBandVertex : public ShapeVertex
                 //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector((rad-thick) * std::cos(ang), (rad-thick) * std::sin(ang), -thick));
             vert = {
                 {(rad-thick) * std::cos(ang), (rad-thick) * std::sin(ang), -thick},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             
             bt = i-1;
@@ -878,42 +917,30 @@ struct EllipseBandVertex : public ShapeVertex
             aed = getAED(Vector(rad * std::cos(ang), -thick, rad * std::sin(ang)));
             vert = {
                 {rad * std::cos(ang), -thick, rad * std::sin(ang)},
-     //           {0,0,0},
-                //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector(rad * std::cos(ang), thick, rad * std::sin(ang)));
             vert = {
                 {rad * std::cos(ang), thick, rad * std::sin(ang)},
-     //           {0,0,0},
-                //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector((rad-thick) * std::cos(ang), thick, (rad-thick) * std::sin(ang)));
             vert = {
                 {(rad-thick) * std::cos(ang), thick, (rad-thick) * std::sin(ang)},
-    //            {0,0,0},
-                //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector((rad-thick) * std::cos(ang), -thick, (rad-thick) * std::sin(ang)));
             vert = {
                 {(rad-thick) * std::cos(ang), -thick, (rad-thick) * std::sin(ang)},
-      //          {0,0,0},
-                //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             
             bt = i-1;
@@ -937,42 +964,30 @@ struct EllipseBandVertex : public ShapeVertex
             aed = getAED(Vector(-thick, rad * std::cos(ang),rad * std::sin(ang)));
             vert = {
                 {-thick, rad * std::cos(ang),rad * std::sin(ang)},
-   //             {0,0,0},
-                //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector(thick, rad * std::cos(ang),rad * std::sin(ang)));
             vert = {
                 {thick, rad * std::cos(ang),rad * std::sin(ang)},
-      //          {0,0,0},
-                //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector(thick, (rad-thick) * std::cos(ang), (rad-thick) * std::sin(ang)));
             vert = {
                 {thick, (rad-thick) * std::cos(ang), (rad-thick) * std::sin(ang)},
-      //          {0,0,0},
-                //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang),0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             aed = getAED(Vector(-thick, (rad-thick) * std::cos(ang), (rad-thick) * std::sin(ang)));
             vert = {
                 {-thick, (rad-thick) * std::cos(ang), (rad-thick) * std::sin(ang)},
-      //          {0,0,0},
-                //{aed.x, aed.y, aed.z},
                 {std::sin(ang), std::cos(ang), 0},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-                {0.5,0.5},
-                {aed.x, aed.y, aed.z}};
+                {0.5,0.5}};
             vertices.add(vert);
             
             bt = i-1;
@@ -1002,50 +1017,79 @@ struct EllipseBandVertex : public ShapeVertex
 };
 struct RectangleVertex : ShapeVertex
 {
-    void initShape(OpenGLContext& context, float cof1=1, float cof2 = 0, float cof3 = 0) override
+    void initShape(OpenGLContext& context, float cof1=1, float cof2 = 1, float cof3 = 0) override
     {
         Vertex vert;
         Colour g = Colour(GRID_LINE);
-        Vector aed;
-        aed = getAED(Vector(-cof1, cof1, 0));
         vert = {
-            {-cof1,cof1,0},
-    //        {0,0,0},
-            //{aed.x, aed.y, aed.z},
+            {-cof1,cof2,0},
             {0,0,1},
             {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {0.0,0.0},
-            {aed.x, aed.y, aed.z}};
+            {0.0,1.0}};
         vertices.add(vert);
-        aed = getAED(Vector(cof1, cof1, 0));
         vert = {
-            {cof1,cof1,0},
-   //         {0,0,0},
-            //{aed.x, aed.y, aed.z},
+            {cof1,cof2,0},
             {0,0,1},
             {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {1.0,0.0},
-            {aed.x, aed.y, aed.z}};
+            {1.0,1.0}};
         vertices.add(vert);
-        aed = getAED(Vector(cof1, -cof1, 0));
         vert = {
-            {cof1,-cof1,0},
-    //        {0,0,0},
-            //{aed.x, aed.y, aed.z},
+            {cof1,-cof2,0},
             {0,0,1},
             {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {1.0,1.0},
-            {aed.x, aed.y, aed.z}};
+            {1.0,0.0}};
         vertices.add(vert);
-        aed = getAED(Vector(-cof1, -cof1, 0));
         vert = {
-            {-cof1,-cof1,0},
-     //       {0,0,0},
-            //{aed.x, aed.y, aed.z},
+            {-cof1,-cof2,0},
             {0,0,1},
             {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {0.0,1.0},
-            {aed.x, aed.y, aed.z}};
+            {0.0,0.0}};
+        vertices.add(vert);
+        indecies.add(0);
+        indecies.add(1);
+        indecies.add(2);
+        indecies.add(0);
+        indecies.add(2);
+        indecies.add(3);
+        context.extensions.glGenVertexArrays(1, &shapeVAO);
+        context.extensions.glGenBuffers (1, &shapeVBO);
+        context.extensions.glGenBuffers (1, &shapeEBO);
+        context.extensions.glBindVertexArray(shapeVAO);
+        putData(context, vertices, indecies);
+        enableVertexArray(context);
+        context.extensions.glBindVertexArray(0);
+        vertexSize = indecies.size();
+    }
+};
+struct FloorVertex : ShapeVertex
+{
+    void initShape(OpenGLContext& context, float cof1=5000, float cof2 = 5000, float cof3 = 0) override
+    {
+        Vertex vert;
+        Colour g = Colour(RULER_LINE);
+        vert = {
+            {-cof1,0,cof2},
+            {0,0,1},
+            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+            {0.0,1.0}};
+        vertices.add(vert);
+        vert = {
+            {cof1,0,cof2},
+            {0,0,1},
+            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+            {1.0,1.0}};
+        vertices.add(vert);
+        vert = {
+            {cof1,0,-cof2},
+            {0,0,1},
+            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+            {1.0,0.0}};
+        vertices.add(vert);
+        vert = {
+            {-cof1,0,-cof2},
+            {0,0,1},
+            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+            {0.0,0.0}};
         vertices.add(vert);
         indecies.add(0);
         indecies.add(1);
@@ -1072,42 +1116,29 @@ struct TextureVertex : ShapeVertex
         aed = getAED(Vector(-cof1, cof1, 0));
         vert = {
             {-cof1,cof1,0},
- //           {0,0,0},
-            //{aed.x, aed.y, aed.z},
             {0,0,1},
             {1.0,1.0,1.0,1.0},
-            {0.0,1.0},
-            {aed.x, aed.y, aed.z}};
+            {0.0,1.0}};
         vertices.add(vert);
-   //     aed = getAED(Vector(cof1, cof1, 0));
         vert = {
             {cof1,cof1,0},
-  //          {0,0,0},
-            //,
             {0,0,1},
             {1.0,0.0,1.0,1.0},
-            {1.0,1.0},
-            {aed.x, aed.y, aed.z}};
+            {1.0,1.0}};
         vertices.add(vert);
         aed = getAED(Vector(cof1, -cof1, 0));
         vert = {
             {cof1,-cof1,0},
- //           {0,0,0},
-            //{aed.x, aed.y, aed.z},
             {0,0,1},
             {1.0,1.0,0.0,1.0},
-            {1.0,0.0},
-            {0,0,0}};
+            {1.0,0.0}};
         vertices.add(vert);
         aed = getAED(Vector(-cof1, -cof1, 0));
         vert = {
             {-cof1,-cof1,0},
-  //          {0,0,0},
-            //{aed.x, aed.y, aed.z},
             {0,0,1},
             {1.0,0.0,0.0,1.0},
-            {0.0,0.0},
-            {aed.x, aed.y, aed.z}};
+            {0.0,0.0}};
         vertices.add(vert);
         indecies.add(0);
         indecies.add(1);

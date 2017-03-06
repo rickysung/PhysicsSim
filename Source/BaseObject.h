@@ -11,7 +11,8 @@
 #ifndef BASEOBJECT_H_INCLUDED
 #define BASEOBJECT_H_INCLUDED
 #include "../JuceLibraryCode/JuceHeader.h"
-typedef Vector3D<double> Vector;
+typedef Vector3D<float> Vector;
+
 class RigidBody;
 class MechanicalPoint
 {
@@ -19,7 +20,7 @@ class MechanicalPoint
 class BodyPoint
 {
 public:
-    BodyPoint(double x, double y, double z=0);
+    BodyPoint(float, float, float);
     Vector bodyPoint;
 };
 class ForcePoint : public MechanicalPoint

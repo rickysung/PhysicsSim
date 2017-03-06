@@ -11,7 +11,10 @@
 //==============================================================================
 MainContentComponent::MainContentComponent()
 {
-    addAndMakeVisible(physicscontainer = new PhysicsContainer());
+    const Desktop::Displays::Display& display = Desktop::getInstance().getDisplays().getMainDisplay();
+    physicscontainer = new PhysicsContainer();
+    physicscontainer->setSize(display.userArea.getWidth(), display.userArea.getHeight());
+    addAndMakeVisible(physicscontainer);
     resized();
 }
 

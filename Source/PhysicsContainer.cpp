@@ -40,8 +40,8 @@ PhysicsContainer::PhysicsContainer ()
 
 
     //[Constructor] You can add your own custom stuff here..
-    Bodys.add(new RigidBody( 100,200));
-    Bodys.getLast()->setPosition(Vector(500,500,0));
+    Bodys.add(new RigidBody(100, 200));
+    Bodys.getLast()->setPosition(Vector(500, 500, 0));
     //[/Constructor]
 }
 
@@ -53,6 +53,7 @@ PhysicsContainer::~PhysicsContainer()
 
 
     //[Destructor]. You can add your own custom destruction code here..
+    shutdownOpenGL();
     //[/Destructor]
 }
 
@@ -60,18 +61,18 @@ PhysicsContainer::~PhysicsContainer()
 void PhysicsContainer::paint (Graphics& g)
 {
     //[UserPrePaint] Add your own custom painting code here..
-    int n = Bodys.size();
+    //int n = Bodys.size();
     //[/UserPrePaint]
 
-    g.fillAll (Colours::white);
+    //g.fillAll (Colours::white);
 
     //[UserPaint] Add your own custom painting code here..
-    RigidBody* body;
-    for(int i=0 ; i<n ; i++)
-    {
-        body = dynamic_cast<RigidBody*>(Bodys.getUnchecked(i));
-        body->draw(g);
-    }
+//    RigidBody* body;
+//    for(int i=0 ; i<n ; i++)
+//    {
+//        body = dynamic_cast<RigidBody*>(Bodys.getUnchecked(i));
+//        body->draw(g);
+//    }
     //[/UserPaint]
 }
 
@@ -87,6 +88,18 @@ void PhysicsContainer::resized()
 
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
+void PhysicsContainer::initialise()
+{
+    screenRenderer = new ScreenRenderer(openGLContext, getWidth(), getHeight());
+}
+void PhysicsContainer::render()
+{
+    screenRenderer->draw();
+}
+void PhysicsContainer::shutdown()
+{
+    
+}
 //[/MiscUserCode]
 
 
@@ -100,9 +113,9 @@ void PhysicsContainer::resized()
 BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="PhysicsContainer" componentName=""
-                 parentClasses="public Component" constructorParams="" variableInitialisers=""
-                 snapPixels="8" snapActive="1" snapShown="1" overlayOpacity="0.330"
-                 fixedSize="0" initialWidth="600" initialHeight="400">
+                 parentClasses="public OpenGLAppComponent" constructorParams=""
+                 variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
+                 overlayOpacity="0.330" fixedSize="0" initialWidth="600" initialHeight="400">
   <BACKGROUND backgroundColour="ffffffff"/>
 </JUCER_COMPONENT>
 

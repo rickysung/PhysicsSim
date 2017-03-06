@@ -12,10 +12,10 @@
 
 RigidBody::RigidBody(int w, int h)
 {
-    bodyPoints.add(BodyPoint(-w/2,-h/2));
-    bodyPoints.add(BodyPoint(-w/2,h/2));
-    bodyPoints.add(BodyPoint(w/2,h/2));
-    bodyPoints.add(BodyPoint(w/2,-h/2));
+    bodyPoints.add(BodyPoint(-w/2,-h/2, 0));
+    bodyPoints.add(BodyPoint(-w/2,h/2, 0));
+    bodyPoints.add(BodyPoint(w/2,h/2, 0));
+    bodyPoints.add(BodyPoint(w/2,-h/2, 0));
 }
 void RigidBody::draw(Graphics& g)
 {

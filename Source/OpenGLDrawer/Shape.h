@@ -24,6 +24,38 @@ public:
 protected:
     OpenGLContext& context;
 };
+struct HeadShape : public Shape
+{
+public:
+    HeadShape(OpenGLContext& openGLContext) : Shape(openGLContext)
+    {
+        //shapeFile.load(BinaryData::hmdhead_obj);
+        Array<Colour> colourmap = {Colours::darkgrey, Colours::grey, Colours::white};
+        for(int i=0 ; i<shapeFile.modelObjects.size() ; i++)
+        {
+            VertexArrays.add(new WavefrontVertex(shapeFile.modelObjects.getUnchecked(i)->mesh, colourmap[i]));
+            VertexArrays.getLast()->initShape(context);
+        }
+    }
+    ~HeadShape()
+    {
+        for(int i=0 ; i<shapeFile.modelObjects.size() ; i++)
+        {
+            VertexArrays.getUnchecked(i)->deleteShape(context);
+        }
+    }
+    void draw() override
+    {
+        for(int i=0 ; i<shapeFile.modelObjects.size() ; i++)
+        {
+            context.extensions.glBindVertexArray(VertexArrays.getUnchecked(i)->shapeVAO);
+            glDrawElements(GL_TRIANGLES, VertexArrays.getUnchecked(i)->vertexSize, GL_UNSIGNED_INT, 0);
+            context.extensions.glBindVertexArray(0);
+        }
+    }
+    WavefrontObjFile shapeFile;
+    OwnedArray<WavefrontVertex> VertexArrays;
+};
 struct CursorShape : public Shape
 {
 public:
@@ -161,6 +193,31 @@ struct SphereGridShape : public Shape
 private:
     SphereGridVertex gridVertex;
 };
+struct HeadOrientShape : public Shape
+{
+public:
+    HeadOrientShape(OpenGLContext& openGLContext, float length) : Shape(openGLContext)
+    {
+        HeadVector.initShape(context, 1.3f, Colour(Colours::white), Vector(0, 0, length));
+        NoseVector.initShape(context, 1.3f, Colour(Colours::white), Vector(0, length, 0));
+    }
+    ~HeadOrientShape()
+    {
+        HeadVector.deleteShape(context);
+        NoseVector.deleteShape(context);
+    }
+    void draw() override
+    {
+        context.extensions.glBindVertexArray(HeadVector.shapeVAO);
+        glDrawElements(GL_TRIANGLES, HeadVector.vertexSize, GL_UNSIGNED_INT, 0);
+        
+        context.extensions.glBindVertexArray(NoseVector.shapeVAO);
+        glDrawElements(GL_TRIANGLES, NoseVector.vertexSize, GL_UNSIGNED_INT, 0);
+    }
+private:
+    LineVertex HeadVector;
+    LineVertex NoseVector;
+};
 struct PolarGridShape : public Shape
 {
 public:
@@ -172,11 +229,11 @@ public:
         {
             gridEllipses[i].initShape(context, diff*(i+1));
         }
-        X.initShape(context, 1, Colour(GRID_LINE), Vector(div * diff, 0, 0), Vector(-div * diff, 0, 0));
-        Y.initShape(context, 1, Colour(GRID_LINE), Vector(0, div*diff, 0), Vector(0, -div*diff, 0));
-        Z.initShape(context, 1, Colour(GRID_LINE), Vector(0, 0, div*diff), Vector(0, 0, -div*diff));
-        HeadVector.initShape(context, 1.3f, Colour(Colours::white), Vector(0, 0, div * diff * 0.5));
-        NoseVector.initShape(context, 1.3f, Colour(Colours::white), Vector(0, div * diff * 0.5, 0));
+        X.initShape(context, 1, Colour(GRID_LINE), Vector(div * diff, 0, 0), Vector(diff, 0, 0));
+        X2.initShape(context, 1, Colour(GRID_LINE), Vector(-div * diff, 0, 0), Vector(-diff, 0, 0));
+        //Y.initShape(context, 1, Colour(GRID_LINE), Vector(0, div*diff, 0), Vector(0, -div*diff, 0));
+        Z.initShape(context, 1, Colour(GRID_LINE), Vector(0, 0, div*diff), Vector(0, 0, diff));
+        Z2.initShape(context, 1, Colour(GRID_LINE), Vector(0, 0, -div*diff), Vector(0, 0, -diff));
     }
     ~PolarGridShape()
     {
@@ -186,10 +243,10 @@ public:
             gridEllipses[i].deleteShape(context);
         }
         X.deleteShape(context);
-        Y.deleteShape(context);
+        X2.deleteShape(context);
+        //Y.deleteShape(context);
         Z.deleteShape(context);
-        HeadVector.deleteShape(context);
-        NoseVector.deleteShape(context);
+        Z2.deleteShape(context);
         delete[] gridEllipses;
     }
     void draw () override
@@ -202,26 +259,25 @@ public:
         }
         context.extensions.glBindVertexArray(X.shapeVAO);
         glDrawElements(GL_TRIANGLES, X.vertexSize, GL_UNSIGNED_INT, 0);
-        context.extensions.glBindVertexArray(Y.shapeVAO);
-        glDrawElements(GL_TRIANGLES, Y.vertexSize, GL_UNSIGNED_INT, 0);
+        
         context.extensions.glBindVertexArray(Z.shapeVAO);
         glDrawElements(GL_TRIANGLES, Z.vertexSize, GL_UNSIGNED_INT, 0);
         
-        context.extensions.glBindVertexArray(HeadVector.shapeVAO);
-        glDrawElements(GL_TRIANGLES, HeadVector.vertexSize, GL_UNSIGNED_INT, 0);
+        context.extensions.glBindVertexArray(X2.shapeVAO);
+        glDrawElements(GL_TRIANGLES, X2.vertexSize, GL_UNSIGNED_INT, 0);
+        context.extensions.glBindVertexArray(Z2.shapeVAO);
         
-        context.extensions.glBindVertexArray(NoseVector.shapeVAO);
-        glDrawElements(GL_TRIANGLES, NoseVector.vertexSize, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, Z2.vertexSize, GL_UNSIGNED_INT, 0);
+        
         context.extensions.glBindVertexArray(0);
     }
 private:
     const int division;
     EllipseVertex* gridEllipses;
     LineVertex X;
-    LineVertex Y;
     LineVertex Z;
-    LineVertex HeadVector;
-    LineVertex NoseVector;
+    LineVertex X2;
+    LineVertex Z2;
 };
 struct AmbisonicControllerShape : public Shape
 {
@@ -305,6 +361,44 @@ private:
     TextureVertex textureVertex;
 };
 
+struct FloorShape : public Shape
+{
+    FloorShape(OpenGLContext& openGLContext) : Shape(openGLContext)
+    {
+        quadVertex.initShape(context);
+    }
+    ~FloorShape()
+    {
+        quadVertex.deleteShape(context);
+    }
+    void draw () override
+    {
+        context.extensions.glBindVertexArray(quadVertex.shapeVAO);
+        glDrawElements(GL_TRIANGLES, quadVertex.vertexSize, GL_UNSIGNED_INT, 0);
+        context.extensions.glBindVertexArray(0);
+    }
+private:
+    FloorVertex quadVertex;
+};
+struct LabelShape : public Shape
+{
+    LabelShape(OpenGLContext& openGLContext) : Shape(openGLContext)
+    {
+        quadVertex.initShape(context, 3.5f, 0.4375f);
+    }
+    ~LabelShape()
+    {
+        quadVertex.deleteShape(context);
+    }
+    void draw () override
+    {
+        context.extensions.glBindVertexArray(quadVertex.shapeVAO);
+        glDrawElements(GL_TRIANGLES, quadVertex.vertexSize, GL_UNSIGNED_INT, 0);
+        context.extensions.glBindVertexArray(0);
+    }
+private:
+    RectangleVertex quadVertex;
+};
 struct ScreenShape : public Shape
 {
 public:

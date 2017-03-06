@@ -11,6 +11,17 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
+
+#define BACKGROUND_MAIN 0xff000000
+#define BACKGROUND_SUB  0xff323232
+#define RULER_LINE      0xff383838
+#define BOX_LINE        0xff383838
+#define GRID_LINE       0xff666666
+#define TEXT            0xff939393
+#define TEXT_SUB        0xff666666
+#define FOCUS_COLOR     0xff33d9ff
+typedef Vector3D<float> Vector;
+typedef Matrix3D<float> Matrix;
 #include "Shape.h"
 
 class OpenGLDrawer

@@ -23,6 +23,8 @@
 //[Headers]     -- You can add your own extra header files here --
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "RigidBody.h"
+#include "OpenGLDrawer/OpenGLDrawer.h"
+#include "OpenGLDrawer/Renderer/ScreenRenderer.h"
 //[/Headers]
 
 
@@ -35,7 +37,7 @@
     Describe your class and how it works here!
                                                                     //[/Comments]
 */
-class PhysicsContainer  : public Component
+class PhysicsContainer  : public OpenGLAppComponent
 {
 public:
     //==============================================================================
@@ -44,6 +46,9 @@ public:
 
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
+    void initialise() override;
+    void render() override;
+    void shutdown() override;
     //[/UserMethods]
 
     void paint (Graphics& g) override;
@@ -54,6 +59,7 @@ public:
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
     OwnedArray<BaseObject> Bodys;
+    ScopedPointer<ScreenRenderer> screenRenderer;
     //[/UserVariables]
 
     //==============================================================================

@@ -5,11 +5,31 @@
               jucerVersion="4.3.0">
   <MAINGROUP id="Vc2Ney" name="PhysicsSim">
     <GROUP id="{11E7D4EF-A901-87AC-EEA4-5A82F14921E2}" name="Source">
+      <GROUP id="{DB34089F-719C-1377-300E-276907183D31}" name="OpenGLDrawer">
+        <GROUP id="{0EF6CB2B-0FA8-FBC7-0606-71EBE867ED3F}" name="Renderer">
+          <GROUP id="{B72ABD95-108F-2169-6A38-DB77791EC615}" name="BaseRenderer">
+            <FILE id="T7OVzD" name="NodeRenderer.h" compile="0" resource="0" file="Source/OpenGLDrawer/Renderer/BaseRenderer/NodeRenderer.h"/>
+          </GROUP>
+          <FILE id="C2aVE8" name="ScreenRenderer.cpp" compile="1" resource="0"
+                file="Source/OpenGLDrawer/Renderer/ScreenRenderer.cpp"/>
+          <FILE id="H4wdlJ" name="ScreenRenderer.h" compile="0" resource="0"
+                file="Source/OpenGLDrawer/Renderer/ScreenRenderer.h"/>
+        </GROUP>
+        <FILE id="ML5qDu" name="GaussianBlurRenderer.cpp" compile="1" resource="0"
+              file="Source/OpenGLDrawer/GaussianBlurRenderer.cpp"/>
+        <FILE id="RKtRxU" name="GaussianBlurRenderer.h" compile="0" resource="0"
+              file="Source/OpenGLDrawer/GaussianBlurRenderer.h"/>
+        <FILE id="EE8DjQ" name="OpenGLDrawer.h" compile="0" resource="0" file="Source/OpenGLDrawer/OpenGLDrawer.h"/>
+        <FILE id="mpsac6" name="Shape.h" compile="0" resource="0" file="Source/OpenGLDrawer/Shape.h"/>
+        <FILE id="QyHfT0" name="ShapeVertex.h" compile="0" resource="0" file="Source/OpenGLDrawer/ShapeVertex.h"/>
+        <FILE id="WHmIc2" name="WavefrontObjParser.h" compile="0" resource="0"
+              file="Source/OpenGLDrawer/WavefrontObjParser.h"/>
+      </GROUP>
       <FILE id="LPm4g1" name="PhysicsContainer.cpp" compile="1" resource="0"
             file="Source/PhysicsContainer.cpp"/>
       <FILE id="FyDMGI" name="PhysicsContainer.h" compile="0" resource="0"
             file="Source/PhysicsContainer.h"/>
-      <GROUP id="{74143CA1-C394-92E4-7A77-039F8948D3AF}" name="New Group">
+      <GROUP id="{74143CA1-C394-92E4-7A77-039F8948D3AF}" name="BaseObject">
         <FILE id="ZpZk6O" name="BaseObject.cpp" compile="1" resource="0" file="Source/BaseObject.cpp"/>
         <FILE id="c9TJH5" name="BaseObject.h" compile="0" resource="0" file="Source/BaseObject.h"/>
         <FILE id="coLxL6" name="RigidBody.cpp" compile="1" resource="0" file="Source/RigidBody.cpp"/>
