@@ -42,6 +42,7 @@ PhysicsContainer::PhysicsContainer ()
     //[Constructor] You can add your own custom stuff here..
     Bodys.add(new RigidBody(100, 200));
     Bodys.getLast()->setPosition(Vector(500, 500, 0));
+    setWantsKeyboardFocus(true);
     //[/Constructor]
 }
 
@@ -62,9 +63,11 @@ void PhysicsContainer::paint (Graphics& g)
 {
     //[UserPrePaint] Add your own custom painting code here..
     //int n = Bodys.size();
+    g.setColour(Colours::white);
+//    drawGraph(g, "accel", 10, 10, 200, 100, t.size(), t.getRawDataPointer());
+//    drawGraph(g, "accel", 10, 120, 200, 100, v.size(), v.getRawDataPointer());
+//    drawGraph(g, "accel", 10, 230, 200, 100, a.size(), a.getRawDataPointer());
     //[/UserPrePaint]
-
-    //g.fillAll (Colours::white);
 
     //[UserPaint] Add your own custom painting code here..
 //    RigidBody* body;
@@ -85,20 +88,125 @@ void PhysicsContainer::resized()
     //[/UserResized]
 }
 
+void PhysicsContainer::mouseDown (const MouseEvent& e)
+{
+    //[UserCode_mouseDown] -- Add your code here...
+    if(!e.mods.isCommandDown())
+    {
+        startAzi = screenRenderer->getCameraAzimuth();
+        startElv = screenRenderer->getCameraElevation();
+    }
+    else
+    {
+        startYaw = screenRenderer->getCameraYaw();
+        startPch = screenRenderer->getCameraPitch();
+    }
+    //[/UserCode_mouseDown]
+}
+
+void PhysicsContainer::mouseDrag (const MouseEvent& e)
+{
+    //[UserCode_mouseDrag] -- Add your code here...
+    float mx, my;
+    mx = e.getDistanceFromDragStartX() * 0.01f;
+    my = e.getDistanceFromDragStartY() * 0.01f;
+    if(!e.mods.isCommandDown())
+    {
+        screenRenderer->setCameraAzimuth(startAzi - mx);
+        screenRenderer->setCameraElevation(startElv + my);
+    }
+    else
+    {
+        screenRenderer->setCameraYaw(startYaw + mx);
+        screenRenderer->setCameraPitch(startPch + my);
+    }
+    //[/UserCode_mouseDrag]
+}
+
+void PhysicsContainer::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
+{
+    //[UserCode_mouseWheelMove] -- Add your code here...
+    float dis = screenRenderer->getCameraDistance();
+    float diff = -wheel.deltaY;
+    screenRenderer->setCameraDistance(dis + diff);
+    //[/UserCode_mouseWheelMove]
+}
+
+bool PhysicsContainer::keyPressed (const KeyPress& key)
+{
+    //[UserCode_keyPressed] -- Add your code here...
+
+    if(key==KeyPress::downKey)
+    {
+        screenRenderer->accel(-0.001f);
+        return true;
+    }
+    else if(key==KeyPress::upKey)
+    {
+        screenRenderer->accel(0.001f);
+        return true;
+    }
+    else if(key==KeyPress::spaceKey)
+    {
+        screenRenderer->stop();
+    }
+    return false;  // Return true if your handler uses this key event, or false to allow it to be passed-on.
+    //[/UserCode_keyPressed]
+}
+
 
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
+void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float values[])
+{
+    g.setColour(Colours::white);
+    g.fillRect(x, y, w, h);
+    int i;
+    int stride = num/w>1?num/w:1;
+    float min = 99999999;
+    float max = -99999999;
+    for(i=0 ; i<num ; i++)
+    {
+        if(min>values[i])
+            min = values[i];
+        else if(max<values[i])
+            max = values[i];
+    }
+    if(num>stride*3)
+    {
+        if(max == min)
+        {
+            max+=0.0001f;
+        }
+        g.setColour(Colours::red);
+        for(i=0 ; i<num-stride ; i+=stride)
+        {
+            g.drawLine(x + i*w/num,
+                       y + h - h * (values[i]-min)/(max-min),
+                       x + (i+stride)*w/num,
+                       y + h - h * (values[i+stride]-min)/(max-min)
+                       );
+        }
+    }
+}
 void PhysicsContainer::initialise()
 {
     screenRenderer = new ScreenRenderer(openGLContext, getWidth(), getHeight());
 }
 void PhysicsContainer::render()
 {
+    if(screenRenderer->getAcceleration()!=0)
+    {
+        v.add(screenRenderer->getVelocity());
+        a.add(screenRenderer->getAcceleration());
+        t.add(screenRenderer->getLocation());
+    }
     screenRenderer->draw();
+    repaint();
 }
 void PhysicsContainer::shutdown()
 {
-    
+
 }
 //[/MiscUserCode]
 
@@ -116,7 +224,13 @@ BEGIN_JUCER_METADATA
                  parentClasses="public OpenGLAppComponent" constructorParams=""
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
                  overlayOpacity="0.330" fixedSize="0" initialWidth="600" initialHeight="400">
-  <BACKGROUND backgroundColour="ffffffff"/>
+  <METHODS>
+    <METHOD name="mouseDrag (const MouseEvent&amp; e)"/>
+    <METHOD name="mouseDown (const MouseEvent&amp; e)"/>
+    <METHOD name="mouseWheelMove (const MouseEvent&amp; e, const MouseWheelDetails&amp; wheel)"/>
+    <METHOD name="keyPressed (const KeyPress&amp; key)"/>
+  </METHODS>
+  <BACKGROUND backgroundColour="ffffff"/>
 </JUCER_COMPONENT>
 
 END_JUCER_METADATA

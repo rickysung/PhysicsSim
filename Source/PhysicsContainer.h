@@ -53,13 +53,26 @@ public:
 
     void paint (Graphics& g) override;
     void resized() override;
+    void mouseDown (const MouseEvent& e) override;
+    void mouseDrag (const MouseEvent& e) override;
+    void mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel) override;
+    bool keyPressed (const KeyPress& key) override;
 
 
 
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
+    void drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float* v);
     OwnedArray<BaseObject> Bodys;
     ScopedPointer<ScreenRenderer> screenRenderer;
+    Array<float> v;
+    Array<float> a;
+    Array<float> t;
+    float startAzi;
+    float startElv;
+
+    float startYaw;
+    float startPch;
     //[/UserVariables]
 
     //==============================================================================

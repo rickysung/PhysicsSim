@@ -24,12 +24,12 @@ public:
 protected:
     OpenGLContext& context;
 };
-struct HeadShape : public Shape
+struct ObjShape : public Shape
 {
 public:
-    HeadShape(OpenGLContext& openGLContext) : Shape(openGLContext)
+    ObjShape(OpenGLContext& openGLContext, const char* binary_data, const char* mat_binary_data) : Shape(openGLContext)
     {
-        //shapeFile.load(BinaryData::hmdhead_obj);
+        shapeFile.load(binary_data, mat_binary_data);
         Array<Colour> colourmap = {Colours::darkgrey, Colours::grey, Colours::white};
         for(int i=0 ; i<shapeFile.modelObjects.size() ; i++)
         {
@@ -37,11 +37,39 @@ public:
             VertexArrays.getLast()->initShape(context);
         }
     }
-    ~HeadShape()
+    ~ObjShape()
     {
         for(int i=0 ; i<shapeFile.modelObjects.size() ; i++)
         {
             VertexArrays.getUnchecked(i)->deleteShape(context);
+        }
+    }
+    void draw(OpenGLShaderProgram::Uniform* matAmbi,
+              OpenGLShaderProgram::Uniform* matDiff,
+              OpenGLShaderProgram::Uniform* matSpec,
+              OpenGLShaderProgram::Uniform* matShin)
+    {
+        WavefrontObjFile::Vertex amb;
+        WavefrontObjFile::Vertex dif;
+        WavefrontObjFile::Vertex spc;
+        float shn;
+        const char* s;
+        for(int i=0 ; i<shapeFile.modelObjects.size() ; i++)
+        {
+            s = shapeFile.modelObjects.getUnchecked(i)->material.name.getCharPointer();
+            
+            amb = shapeFile.modelObjects.getUnchecked(i)->material.ambient;
+            dif = shapeFile.modelObjects.getUnchecked(i)->material.diffuse;
+            spc = shapeFile.modelObjects.getUnchecked(i)->material.specular;
+            shn = shapeFile.modelObjects.getUnchecked(i)->material.shininess;
+            
+            matAmbi->set(amb.x, amb.y, amb.z);
+            matDiff->set(dif.x, dif.y, dif.z);
+            matSpec->set(spc.x, spc.y, spc.z);
+            matShin->set(shn);
+            context.extensions.glBindVertexArray(VertexArrays.getUnchecked(i)->shapeVAO);
+            glDrawElements(GL_TRIANGLES, VertexArrays.getUnchecked(i)->vertexSize, GL_UNSIGNED_INT, 0);
+            context.extensions.glBindVertexArray(0);
         }
     }
     void draw() override
@@ -374,7 +402,7 @@ struct FloorShape : public Shape
     void draw () override
     {
         context.extensions.glBindVertexArray(quadVertex.shapeVAO);
-        glDrawElements(GL_TRIANGLES, quadVertex.vertexSize, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_LINES, quadVertex.vertexSize, GL_UNSIGNED_INT, 0);
         context.extensions.glBindVertexArray(0);
     }
 private:

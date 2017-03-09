@@ -45,6 +45,13 @@ public:
         nodeIndex = createUniform("nodeIndex");
         nodeNum = createUniform("nodeNum");
         labelTexture = createUniform("labelTexture");
+        ambientLoc = createUniform("material.ambient");
+        diffuseLoc = createUniform("material.diffuse");
+        specularLoc = createUniform("material.specular");
+        shineLoc = createUniform("material.shininess");
+        lightAmbientLoc = createUniform("light.ambient");
+        lightDiffuseLoc = createUniform("light.diffuse");
+        lightSpecularLoc = createUniform("light.specular");
     }
     void BindLabelTexture(GLuint inputTexture)
     {
@@ -61,9 +68,13 @@ public:
     virtual float getCameraAzimuth() { return camAzimuth; }
     virtual float getCameraElevation() { return camElevation; }
     virtual float getCameraDistance() { return camDistance; }
+    virtual float getCameraYaw() { return camYaw; }
+    virtual float getCameraPitch() { return camPitch; }
     virtual void setCameraAzimuth(float val) { camAzimuth = val; }
     virtual void setCameraElevation(float val) { camElevation = val; }
     virtual void setCameraDistance(float val) { camDistance = val; }
+    virtual void setCameraYaw(float val) { camYaw = val; }
+    virtual void setCameraPitch(float val) { camPitch = val; }
     float getViewAngleHorizon() { return viewAngleHorizon; }
     float getViewAngleVertical() { return viewAngleVertical; }
     void setViewAngleHorizon(float val) { viewAngleHorizon = val; }
@@ -75,6 +86,8 @@ protected:
     float camAzimuth;
     float camElevation;
     float camDistance;
+    float camYaw;
+    float camPitch;
     float nodeSize;
     
     ScopedPointer<OpenGLShaderProgram::Uniform> projectionMatrix;
@@ -90,7 +103,14 @@ protected:
     ScopedPointer<OpenGLShaderProgram::Uniform> nodeIndex;
     ScopedPointer<OpenGLShaderProgram::Uniform> nodeNum;
     ScopedPointer<OpenGLShaderProgram::Uniform> labelTexture;
-//    virtual Matrix getModelMatrixAtPosition(Matrix baseMatrix, float ns, float azi, float elv, float dis) = 0;
+    ScopedPointer<OpenGLShaderProgram::Uniform> ambientLoc;
+    ScopedPointer<OpenGLShaderProgram::Uniform> diffuseLoc;
+    ScopedPointer<OpenGLShaderProgram::Uniform> specularLoc;
+    ScopedPointer<OpenGLShaderProgram::Uniform> shineLoc;
+    ScopedPointer<OpenGLShaderProgram::Uniform> lightAmbientLoc;
+    ScopedPointer<OpenGLShaderProgram::Uniform> lightDiffuseLoc;
+    ScopedPointer<OpenGLShaderProgram::Uniform> lightSpecularLoc;
+    //    virtual Matrix getModelMatrixAtPosition(Matrix baseMatrix, float ns, float azi, float elv, float dis) = 0;
  
     void drawShape(Shape& shapeToDraw,
                    Colour iColour,

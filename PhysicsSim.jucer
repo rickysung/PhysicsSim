@@ -5,6 +5,13 @@
               jucerVersion="4.3.0">
   <MAINGROUP id="Vc2Ney" name="PhysicsSim">
     <GROUP id="{11E7D4EF-A901-87AC-EEA4-5A82F14921E2}" name="Source">
+      <GROUP id="{EE8451D7-11E1-F040-F7B8-D110286DF3D4}" name="Resources">
+        <FILE id="QWFJGC" name="avent.mtl" compile="0" resource="1" file="Source/Resources/avent.mtl"/>
+        <FILE id="JsWpAy" name="avent.obj" compile="0" resource="1" file="Source/Resources/avent.obj"/>
+        <FILE id="OVlmPh" name="avent2.mtl" compile="0" resource="1" file="Source/Resources/avent2.mtl"/>
+        <FILE id="GwawZo" name="aventWheel.mtl" compile="0" resource="1" file="Source/Resources/aventWheel.mtl"/>
+        <FILE id="ysmpcT" name="aventWheel.obj" compile="0" resource="1" file="Source/Resources/aventWheel.obj"/>
+      </GROUP>
       <GROUP id="{DB34089F-719C-1377-300E-276907183D31}" name="OpenGLDrawer">
         <GROUP id="{0EF6CB2B-0FA8-FBC7-0606-71EBE867ED3F}" name="Renderer">
           <GROUP id="{B72ABD95-108F-2169-6A38-DB77791EC615}" name="BaseRenderer">

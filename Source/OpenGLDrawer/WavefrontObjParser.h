@@ -38,10 +38,10 @@ class WavefrontObjFile
 public:
     WavefrontObjFile() {}
 
-    Result load (const String& objFileContent)
+    Result load (const String& objFileContent, const String& matFileContent)
     {
         modelObjects.clear();
-        return parseObjFile (StringArray::fromLines (objFileContent));
+        return parseObjFile (StringArray::fromLines (objFileContent), StringArray::fromLines (matFileContent));
     }
 
     Result load (const File& file)
@@ -267,7 +267,7 @@ private:
         return modelObject.release();
     }
 
-    Result parseObjFile (const StringArray& lines)
+    Result parseObjFile (const StringArray& lines, const StringArray& matlines)
     {
         Mesh mesh;
         Array<Face> faceGroup;
@@ -287,10 +287,18 @@ private:
 
             if (matchToken (l, "usemtl"))
             {
+                if (ModelObject* modelObject = parseFaceGroup (mesh, faceGroup, lastMaterial, lastName))
+                {
+                    const char* s = lastMaterial.name.getCharPointer();
+                    printf("%s \n", s);
+                    modelObjects.add (modelObject);
+                }
                 const String name (String (l).trim());
-
+                //const char* s1 = name.getCharPointer();
+                
                 for (int i = knownMaterials.size(); --i >= 0;)
                 {
+                //    const char* s2 = knownMaterials.getReference(i).name.getCharPointer();
                     if (knownMaterials.getReference(i).name == name)
                     {
                         lastMaterial = knownMaterials.getReference(i);
@@ -301,11 +309,11 @@ private:
                 continue;
             }
 
-//            if (matchToken (l, "mtllib"))
-//            {
-//                Result r = parseMaterial (knownMaterials, String (l).trim());
-//                continue;
-//            }
+            if (matchToken (l, "mtllib"))
+            {
+                Result r = parseMaterial (knownMaterials, matlines);
+                continue;
+            }
 
             if (matchToken (l, "g") || matchToken (l, "o"))
             {
@@ -319,21 +327,23 @@ private:
         }
 
         if (ModelObject* modelObject = parseFaceGroup (mesh, faceGroup, lastMaterial, lastName))
+        {
+            const char* s = lastMaterial.name.getCharPointer();
+            //printf("%s \n", s);
             modelObjects.add (modelObject);
-
+        }
         return Result::ok();
     }
-
-    Result parseMaterial (Array<Material>& materials, const String& filename)
+    Result parseMaterial (Array<Material>& materials, const StringArray& matfile)
     {
-        jassert (sourceFile.exists());
-        File f (sourceFile.getSiblingFile (filename));
-
-        if (! f.exists())
-            return Result::fail ("Cannot open file: " + filename);
-
-        StringArray lines;
-        lines.addLines (f.loadFileAsString());
+//        jassert (sourceFile.exists());
+//        File f (sourceFile.getSiblingFile (filename));
+//
+//        if (! f.exists())
+//            return Result::fail ("Cannot open file: " + filename);
+//        
+        const StringArray& lines = matfile;
+//        lines.addLines (f.loadFileAsString());
 
         materials.clear();
         Material material;

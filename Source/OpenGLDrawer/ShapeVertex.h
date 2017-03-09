@@ -257,7 +257,7 @@ struct WavefrontVertex : ShapeVertex
     }
     void createVertexListFromMesh (const WavefrontObjFile::Mesh& mesh)
     {
-        const float scale = 0.05f;
+        const float scale = 1.0f;
         WavefrontObjFile::TextureCoord defaultTexCoord = { 0.5f, 0.5f };
         WavefrontObjFile::Vertex defaultNormal = { 0.5f, 0.5f, 0.5f };
         //Colour colour = Colours::lightsalmon;
@@ -1063,40 +1063,47 @@ struct RectangleVertex : ShapeVertex
 };
 struct FloorVertex : ShapeVertex
 {
-    void initShape(OpenGLContext& context, float cof1=5000, float cof2 = 5000, float cof3 = 0) override
+    void initShape(OpenGLContext& context, float cof1=1000, float cof2 = 1000, float cof3 = 0) override
     {
         Vertex vert;
-        Colour g = Colour(RULER_LINE);
-        vert = {
-            {-cof1,0,cof2},
-            {0,0,1},
-            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {0.0,1.0}};
-        vertices.add(vert);
-        vert = {
-            {cof1,0,cof2},
-            {0,0,1},
-            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {1.0,1.0}};
-        vertices.add(vert);
-        vert = {
-            {cof1,0,-cof2},
-            {0,0,1},
-            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {1.0,0.0}};
-        vertices.add(vert);
-        vert = {
-            {-cof1,0,-cof2},
-            {0,0,1},
-            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
-            {0.0,0.0}};
-        vertices.add(vert);
-        indecies.add(0);
-        indecies.add(1);
-        indecies.add(2);
-        indecies.add(0);
-        indecies.add(2);
-        indecies.add(3);
+        Colour g = Colours::white;
+        float i;
+        int cnt=0;
+        float diff = 1.0f;
+        for(i= -cof1 ; i<=cof1 ; i+=diff)
+        {
+            vert = {
+                {i,0.0f,-cof2},
+                {0,1,0},
+                {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+                {0.0,1.0}};
+            vertices.add(vert);
+            vert = {
+                {i,0.0f,cof2},
+                {0,1,0},
+                {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+                {1.0,1.0}};
+            vertices.add(vert);
+            indecies.add(cnt++);
+            indecies.add(cnt++);
+        }
+        for(i= -cof2 ; i<=cof2 ; i+=diff)
+        {
+            vert = {
+                {-cof1,0.0f,i},
+                {0,1,0},
+                {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+                {0.0,1.0}};
+            vertices.add(vert);
+            vert = {
+                {cof1,0.0f,i},
+                {0,1,0},
+                {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+                {1.0,1.0}};
+            vertices.add(vert);
+            indecies.add(cnt++);
+            indecies.add(cnt++);
+        }
         context.extensions.glGenVertexArrays(1, &shapeVAO);
         context.extensions.glGenBuffers (1, &shapeVBO);
         context.extensions.glGenBuffers (1, &shapeEBO);
