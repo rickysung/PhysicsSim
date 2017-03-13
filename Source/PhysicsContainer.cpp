@@ -149,7 +149,7 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
     {
         if(!isTimerRunning())
         {
-            startTimer(1000);
+            startTimer(10);
         }
         carBody->forward(0.01);
         return true;
@@ -178,7 +178,8 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 void PhysicsContainer::timerCallback()
 {
-    screenRenderer->saveState();
+    if(carBody->isCheck(7.0f))
+        screenRenderer->saveState();
 }
 void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float values[])
 {

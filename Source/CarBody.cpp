@@ -68,4 +68,5 @@ void CarBody::progress()
     vx = -velocity * std::sin(t) - rearWheelBase * yawrate * std::cos(t+d);
     vz = velocity * std::cos(t) - rearWheelBase * yawrate * std::sin(t+d);
     carState.progress(vx, vz, velocity/wheelHeight, yawrate);
+    dist += velocity;
 }

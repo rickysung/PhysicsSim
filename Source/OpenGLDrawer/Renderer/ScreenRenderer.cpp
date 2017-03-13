@@ -17,12 +17,14 @@ const char* ScreenRenderer::getVertexShader()
     "layout (location = 1) in vec3 normal;\n"
     "layout (location = 2) in vec4 sourceColour;\n"
     "layout (location = 3) in vec2 textureCoordIn;\n"
+    "layout (location = 4) in mat4 instanceMatrix;\n"
     "\n"
     "uniform mat4 modelMatrix;\n"
     "uniform mat4 viewMatrix;\n"
     "uniform mat4 projectionMatrix;\n"
     "uniform float modelScale;\n"
     "uniform vec4 bodyColour;\n"
+    "uniform int modelMode;\n"
     "\n"
     "out vec4 destinationColour;\n"
     "out vec2 TexCoords;\n"
@@ -37,11 +39,25 @@ const char* ScreenRenderer::getVertexShader()
     "   vec3 lp = vec3(0, 2000, 200);\n"
     "   vec3 pos = position;\n"
     "   destinationColour = bodyColour;\n"
-    "   FragNorm = vec3(viewMatrix * modelMatrix * modelScale * vec4(normal, 0.0));\n"
-    "   FragPos = vec3(viewMatrix * modelMatrix * vec4(modelScale * pos, 0.0));\n"
     "   lightPos = vec3(viewMatrix * vec4(lp, 0.0));\n"
     "   TexCoords = textureCoordIn;\n"
-    "   gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(modelScale * pos, 1.0);\n"
+    "   switch(modelMode)\n"
+    "   {\n"
+    "       case 1:\n"
+    "       {\n"
+    "           gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(modelScale * pos, 1.0);\n"
+    "           FragNorm = vec3(viewMatrix * modelMatrix * modelScale * vec4(normal, 0.0));\n"
+    "           FragPos = vec3(viewMatrix * modelMatrix * vec4(modelScale * pos, 0.0));\n"
+    "           break;\n"
+    "       }\n"
+    "       case 2:\n"
+    "       {\n"
+    "           gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(modelScale * pos + 0.1*normal, 1.0);\n"
+    "           FragNorm = vec3(viewMatrix * modelMatrix * modelScale * vec4(normal, 0.0));\n"
+    "           FragPos = vec3(viewMatrix * modelMatrix * vec4(modelScale * pos + 0.1*normal, 0.0));\n"
+    "           break;\n"
+    "       }\n"
+    "   }\n"
     "}";
 }
 const char* ScreenRenderer::getFragmentShader()
@@ -106,8 +122,8 @@ const char* ScreenRenderer::getFragmentShader()
     "   else\n"
     "   {"
     "       float zBuffer = gl_FragCoord.w;\n"
-    "       FragColor = vec4(1.0, 1.0, 1.0, (zBuffer*5)<1.0?(zBuffer*5):1.0);\n"
-    "       if(zBuffer<0.02)\n"
+    "       FragColor = vec4(1.0, 1.0, 1.0, (zBuffer*3)<1.0?(zBuffer*3):1.0);\n"
+    "       if(zBuffer<0.01)\n"
     "           discard;\n"
     "   }"
     "}";
@@ -164,7 +180,7 @@ Matrix ScreenRenderer::getInverseViewMatrix()
 Matrix ScreenRenderer::getProjectionMatrix()
 {
     float n = 1.0f;
-    float f = 200.0f;
+    float f = 2000.0f;
     float w = n * std::tan(viewAngleHorizon/2);
     float h = n * std::tan(viewAngleVertical/2);
     return Matrix::fromFrustum(-w, w, h, -h, n, f);
@@ -178,7 +194,7 @@ Matrix ScreenRenderer::getProjectionMatrix()
 Matrix ScreenRenderer::getInverseProjectionMatrix()
 {
     float n = 1.0f;
-    float f = 200.0f;
+    float f = 2000.0f;
     float w = n * std::tan(viewAngleHorizon/2);
     float h = n * std::tan(viewAngleVertical/2);
     return Matrix(w/n,  0,      0,  0,
@@ -208,6 +224,7 @@ gridShape(glContext,0.8,8),
 floorShape(glContext),
 carShape(glContext, BinaryData::avent_obj, BinaryData::avent2_mtl),
 wheelShape(glContext, BinaryData::aventWheel_obj, BinaryData::aventWheel_mtl),
+roadShape(glContext),
 carBody(cb)
 {
     float verticalRatio = (float)screenWidth/screenHeight;
@@ -233,11 +250,11 @@ carBody(cb)
     diffuseLoc->set(1.0f, 0.5f, 0.32f);
     specularLoc->set(0.5f, 0.5f, 0.5f);
     shineLoc->set(2.0f);
-    lightAmbientLoc->set(0.1f, 0.1f, 0.1f);
-    lightDiffuseLoc->set(0.7f, 0.7f, 0.7f);
+    lightAmbientLoc->set(0.2f, 0.2f, 0.2f);
+    lightDiffuseLoc->set(0.9f, 0.9f, 0.9f);
     lightSpecularLoc->set(1.0f, 1.0f, 1.0f);
     
-    max_save_state = 5;
+    max_save_state = 10;
     state_idx = 0;
 }
 Matrix ScreenRenderer::getWheelMatrix(CarState state, TIRE_INDEX idx)
@@ -308,23 +325,28 @@ void ScreenRenderer::draw()
              0, 0, 1, 0,
              0, 0, 0, 1);
     
-    OpenGLHelpers::clear (Colour::greyLevel (0.3f));
+    OpenGLHelpers::clear (Colours::skyblue);
     shaderProgram->use();
     const float desktopScale = (float) context.getRenderingScale();
-    t = getViewMatrix();
-    viewMatrix->setMatrix4(t.mat, 1, false);
-    modelMatrix->setMatrix4(u.mat, 1, false);
-    modelScale->set(2.0f);
+    
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
     glViewport(0, 0, width*desktopScale, height*desktopScale);
+    t = getViewMatrix();
+    viewMatrix->setMatrix4(t.mat, 1, false);
+    modelMatrix->setMatrix4(u.mat, 1, false);
+    modelScale->set(1.0f);
     bodyColour->set(0.0f,0.0f,1.0f,1.0f);
     isMaterialMode->set(0);
     floorShape.draw();
+    modelMode->set(2);
     isMaterialMode->set(1);
+    roadShape.draw();
+    modelMode->set(1);
     drawCar(carBody.getCarState());
     n = carStates.size();
     isMaterialMode->set(2);
@@ -333,4 +355,5 @@ void ScreenRenderer::draw()
         drawCar(carStates[i]);
     }
     isMaterialMode->set(0);
+    
 }

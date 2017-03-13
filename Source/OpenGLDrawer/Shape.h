@@ -388,7 +388,26 @@ public:
 private:
     TextureVertex textureVertex;
 };
-
+struct RoadShape : public Shape
+{
+    RoadShape(OpenGLContext& openGLContext) : Shape(openGLContext)
+    {
+        roadVertex.initShape(context);
+    }
+    ~RoadShape()
+    {
+        roadVertex.deleteShape(context);
+    }
+    void draw() override
+    {
+        context.extensions.glBindVertexArray(roadVertex.shapeVAO);
+        glDrawElements(GL_TRIANGLES, roadVertex.vertexSize, GL_UNSIGNED_INT, 0);
+        context.extensions.glBindVertexArray(0);
+    }
+private:
+    RoadVertex roadVertex;
+    
+};
 struct FloorShape : public Shape
 {
     FloorShape(OpenGLContext& openGLContext) : Shape(openGLContext)

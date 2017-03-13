@@ -24,31 +24,17 @@ struct ShapeVertex
     virtual ~ShapeVertex()
     {
     }
-    void buildArcLine(Vector v1, Vector v2, float thickness)// p1 and p2 contains Azimuth Elevation Distance sequence
+    void buildArcLine(Vector origin, Vector v1, Vector v2, float thickness)// p1 and p2 contains Azimuth Elevation Distance sequence
     {
         int i;
-        float x1, y1, z1;
-        float x2, y2, z2;
         Colour g = Colour(GRID_LINE);
         Vector p1, p2;
         Vector norm[8];
         Vertex vert;
-        float a, e, d;
         int cnt = vertices.size() - 1;
-        a = v1.x;
-        e = v1.y;
-        d = v1.z;
-        x1 = d * std::cos(e) * std::sin(a);
-        y1 = d * std::sin(e);
-        z1 = d * std::cos(e) * std::cos(a);
-        p1 = Vector(x1, y1, z1);
-        a = v2.x;
-        e = v2.y;
-        d = v2.z;
-        x2 = d * std::cos(e) * std::sin(a);
-        y2 = d * std::sin(e);
-        z2 = d * std::cos(e) * std::cos(a);
-        p2 = Vector(x2, y2, z2);
+        
+        p1 = v1.normalised();
+        p2 = v2.normalised();
         norm[0] = -p1/p1.length();
         norm[1] = (p1-p2)^p1;
         norm[1] /= norm[1].length();
@@ -64,7 +50,7 @@ struct ShapeVertex
         {
             norm[i]*=thickness;
             vert = {
-                {x1, y1, z1},
+                {origin.x+v1.x, origin.y+v1.y, origin.z+v1.z},
                 {norm[i].x, norm[i].y, norm[i].z},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
                 {0.5, 0.5}
@@ -75,7 +61,7 @@ struct ShapeVertex
         {
             norm[i]*=thickness;
             vert = {
-                {x2, y2, z2},
+                {origin.x+v2.x, origin.y+v2.y, origin.z+v2.z},
                 {norm[i].x, norm[i].y, norm[i].z},
                 {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
                 {0.5, 0.5}
@@ -311,8 +297,8 @@ struct WavefrontVertex : ShapeVertex
         context.extensions.glBindVertexArray(0);
         vertexSize = mesh.indices.size();
     }
-    Colour colour;
     WavefrontObjFile::Mesh& mesh;
+    Colour colour;
 };
 struct CubeVertex : ShapeVertex
 {
@@ -759,10 +745,10 @@ struct EllipseVertex : ShapeVertex
         int n=180;
         int i;
         float rad = cof1;
-        for(i=0 ; i<n ; i++)
-        {
-            buildArcLine(Vector(2*M_PI*(float)i/n, 0, rad), Vector(2*M_PI*(float)(i+1)/n, 0, rad), 1);
-        }
+//        for(i=0 ; i<n ; i++)
+//        {
+//            buildArcLine(Vector(2*M_PI*(float)i/n, 0, rad), Vector(2*M_PI*(float)(i+1)/n, 0, rad), 1);
+//        }
         context.extensions.glGenVertexArrays(1, &shapeVAO);
         context.extensions.glGenBuffers (1, &shapeVBO);
         context.extensions.glGenBuffers (1, &shapeEBO);
@@ -1051,6 +1037,92 @@ struct RectangleVertex : ShapeVertex
         indecies.add(0);
         indecies.add(2);
         indecies.add(3);
+        context.extensions.glGenVertexArrays(1, &shapeVAO);
+        context.extensions.glGenBuffers (1, &shapeVBO);
+        context.extensions.glGenBuffers (1, &shapeEBO);
+        context.extensions.glBindVertexArray(shapeVAO);
+        putData(context, vertices, indecies);
+        enableVertexArray(context);
+        context.extensions.glBindVertexArray(0);
+        vertexSize = indecies.size();
+    }
+};
+struct RoadVertex : ShapeVertex
+{
+    Vector buildCurveRoad(Vector& origin, Vector direction, float radius, float rotateAngle, bool isCCW)
+    {
+        direction = direction.normalised();
+        float width = 2.0f;
+        float diff = 5.01f*M_PI/180.0f;
+        float angle;
+        Vector left1, right1;
+        Vector left2, right2;
+        Vector iter = origin;
+        Vector rotateOrigin;
+        if(isCCW)
+        {
+            rotateOrigin = origin + Vector(-direction.z,direction.y,direction.x)*radius;
+            for(angle = 0.0f ; angle<rotateAngle ; angle+=diff)
+            {
+                left1 = Vector(-direction.z,direction.y,direction.x);
+                right1 = Vector(direction.z,direction.y,-direction.x);
+                direction = Vector(direction.x*std::cos(diff) - direction.z*std::sin(diff),direction.y,direction.x*std::sin(diff) + direction.z*std::cos(diff));
+                left2 = Vector(-direction.z,direction.y,direction.x);
+                right2 = Vector(direction.z,direction.y,-direction.x);
+                buildArcLine(rotateOrigin, right1*(radius - width), right2*(radius - width), 1);
+                buildArcLine(rotateOrigin, right1*(radius + width), right2*(radius + width), 1);
+            }
+            origin = rotateOrigin + right2*radius;
+        }
+        else
+        {
+            rotateOrigin = origin + Vector(direction.z,direction.y,-direction.x)*radius;
+            for(angle = 0.0f ; angle<rotateAngle ; angle+=diff)
+            {
+                left1 = Vector(-direction.z,direction.y,direction.x);
+                right1 = Vector(direction.z,direction.y,-direction.x);
+                direction = Vector(direction.x*std::cos(-diff) - direction.z*std::sin(-diff),direction.y,direction.x*std::sin(-diff) + direction.z*std::cos(-diff));
+                left2 = Vector(-direction.z,direction.y,direction.x);
+                right2 = Vector(direction.z,direction.y,-direction.x);
+                buildArcLine(rotateOrigin, left1*(radius - width), left2*(radius - width), 1);
+                buildArcLine(rotateOrigin, left1*(radius + width), left2*(radius + width), 1);
+            }
+            origin = rotateOrigin + left2*radius;
+        }
+        return direction;
+    }
+    Vector buildStraightRoad(Vector& origin, Vector direction, float length)
+    {
+        direction = direction.normalised();
+        float width = 2.0f;
+        Vector left = Vector(-direction.z,direction.y,direction.x);
+        Vector right = Vector(direction.z,direction.y,-direction.x);
+        buildStraightLine(origin + left*width, origin + direction*length + left*width, 1, Colours::red);
+        buildStraightLine(origin + right*width, origin + direction*length + right*width, 1, Colours::red);
+        origin += direction*length;
+        return direction;
+    }
+    void initShape(OpenGLContext& context, float cof1=1, float cof2 = 1, float cof3 = 0) override
+    {
+        Vector t(0,0,0);
+        Vector& origin = t;
+        Vector dir;
+        dir = buildStraightRoad(origin,Vector(0,0,1),3.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_4,false);
+        dir = buildStraightRoad(origin,dir,5.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_4,true);
+        dir = buildStraightRoad(origin,dir,5.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_2,false);
+        dir = buildStraightRoad(origin,dir,20.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_4,true);
+        dir = buildStraightRoad(origin,dir,20.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_2,false);
+        dir = buildStraightRoad(origin,dir,20.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_4,true);
+        dir = buildStraightRoad(origin,dir,2.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_2,false);
+        dir = buildStraightRoad(origin,dir,2.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_4,true);
         context.extensions.glGenVertexArrays(1, &shapeVAO);
         context.extensions.glGenBuffers (1, &shapeVBO);
         context.extensions.glGenBuffers (1, &shapeEBO);

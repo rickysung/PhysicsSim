@@ -86,6 +86,15 @@ public:
 //    Matrix getLocationMatrix();
 //    Matrix getInverseLocationMatrix();
 //    Matrix getWheelMatrix(TIRE_INDEX idx);
+    bool isCheck(float criterion)
+    {
+        if(dist>criterion)
+        {
+            dist = 0;
+            return true;
+        }
+        return false;
+    }
     CarState& getCarState();
     void forward(float val);
     void steer(float ang);
@@ -95,7 +104,7 @@ private:
     const float rearWheelBase;
     const float frontWheelTrack;
     const float rearWheelTrack;
-    
+    float dist = 0;
     float velocity;
     float acceleration;
     

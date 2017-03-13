@@ -46,6 +46,7 @@ private:
     FloorShape floorShape;
     ObjShape carShape;
     ObjShape wheelShape;
+    RoadShape roadShape;
     CarBody& carBody;
     Array<CarState> carStates;
     int max_save_state;
