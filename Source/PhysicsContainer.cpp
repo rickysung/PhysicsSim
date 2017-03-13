@@ -40,9 +40,13 @@ PhysicsContainer::PhysicsContainer ()
 
 
     //[Constructor] You can add your own custom stuff here..
-    Bodys.add(new RigidBody(100, 200));
-    Bodys.getLast()->setPosition(Vector(500, 500, 0));
+    carBody = new CarBody(0.31f,
+                          1.16f,
+                          1.54f,
+                          0.851f,
+                          0.85f);
     setWantsKeyboardFocus(true);
+
     //[/Constructor]
 }
 
@@ -138,17 +142,32 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 
     if(key==KeyPress::downKey)
     {
-        screenRenderer->accel(-0.001f);
+        carBody->forward(-0.01);
         return true;
     }
     else if(key==KeyPress::upKey)
     {
-        screenRenderer->accel(0.001f);
+        if(!isTimerRunning())
+        {
+            startTimer(1000);
+        }
+        carBody->forward(0.01);
         return true;
     }
     else if(key==KeyPress::spaceKey)
     {
-        screenRenderer->stop();
+        stopTimer();
+        return true;
+    }
+    else if(key==KeyPress::leftKey)
+    {
+        carBody->steer(0.05);
+        return true;
+    }
+    else if(key==KeyPress::rightKey)
+    {
+        carBody->steer(-0.05);
+        return true;
     }
     return false;  // Return true if your handler uses this key event, or false to allow it to be passed-on.
     //[/UserCode_keyPressed]
@@ -157,6 +176,10 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
+void PhysicsContainer::timerCallback()
+{
+    screenRenderer->saveState();
+}
 void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float values[])
 {
     g.setColour(Colours::white);
@@ -191,16 +214,17 @@ void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, 
 }
 void PhysicsContainer::initialise()
 {
-    screenRenderer = new ScreenRenderer(openGLContext, getWidth(), getHeight());
+    screenRenderer = new ScreenRenderer(openGLContext, *carBody, getWidth(), getHeight());
 }
 void PhysicsContainer::render()
 {
-    if(screenRenderer->getAcceleration()!=0)
-    {
-        v.add(screenRenderer->getVelocity());
-        a.add(screenRenderer->getAcceleration());
-        t.add(screenRenderer->getLocation());
-    }
+//    if(screenRenderer->getAcceleration()!=0)
+//    {
+//        v.add(screenRenderer->getVelocity());
+//        a.add(screenRenderer->getAcceleration());
+//        t.add(screenRenderer->getLocation());
+//    }
+    carBody->progress();
     screenRenderer->draw();
     repaint();
 }
@@ -221,7 +245,7 @@ void PhysicsContainer::shutdown()
 BEGIN_JUCER_METADATA
 
 <JUCER_COMPONENT documentType="Component" className="PhysicsContainer" componentName=""
-                 parentClasses="public OpenGLAppComponent" constructorParams=""
+                 parentClasses="public OpenGLAppComponent, public Timer" constructorParams=""
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
                  overlayOpacity="0.330" fixedSize="0" initialWidth="600" initialHeight="400">
   <METHODS>

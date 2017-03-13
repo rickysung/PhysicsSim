@@ -22,7 +22,7 @@
 
 //[Headers]     -- You can add your own extra header files here --
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "RigidBody.h"
+#include "CarBody.h"
 #include "OpenGLDrawer/OpenGLDrawer.h"
 #include "OpenGLDrawer/Renderer/ScreenRenderer.h"
 //[/Headers]
@@ -37,7 +37,8 @@
     Describe your class and how it works here!
                                                                     //[/Comments]
 */
-class PhysicsContainer  : public OpenGLAppComponent
+class PhysicsContainer  : public OpenGLAppComponent,
+                          public Timer
 {
 public:
     //==============================================================================
@@ -49,6 +50,7 @@ public:
     void initialise() override;
     void render() override;
     void shutdown() override;
+    void timerCallback() override;
     //[/UserMethods]
 
     void paint (Graphics& g) override;
@@ -63,16 +65,14 @@ public:
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
     void drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float* v);
-    OwnedArray<BaseObject> Bodys;
+    ScopedPointer<CarBody> carBody;
     ScopedPointer<ScreenRenderer> screenRenderer;
-    Array<float> v;
-    Array<float> a;
-    Array<float> t;
     float startAzi;
     float startElv;
 
     float startYaw;
     float startPch;
+    bool isTimerStarted = false;
     //[/UserVariables]
 
     //==============================================================================

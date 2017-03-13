@@ -12,24 +12,22 @@
 #define SCREENRENDERER_H_INCLUDED
 #include "../OpenGLDrawer.h"
 #include "BaseRenderer/NodeRenderer.h"
-
+#include "../../CarBody.h"
 class ScreenRenderer : public SimRenderer
 {
 public:
     ScreenRenderer(OpenGLContext& glContext,
+                   CarBody& carBody,
                       int screenWidth,
-                      int screenHeight);
+                   int screenHeight);
     void draw() override;
-    void accel(float v);
-    void stop();
     void BindTexture(GLuint textureID)
     {
         inputTexture = textureID;
     }
+    void saveState();
     float getTimer() { return timer; }
-    float getVelocity() { return velocity; }
-    float getAcceleration() {return acceleration; }
-    float getLocation() { return trans; }
+    
     Matrix getTransformMatrix() override;
     Matrix getInverseTransformMatrix() override;
     Matrix getViewMatrix() override;
@@ -37,11 +35,9 @@ public:
     Matrix getInverseProjectionMatrix() override;
     Matrix getInverseViewMatrix() override;
 private:
-    void drawCar();
+    Matrix getWheelMatrix(CarState, TIRE_INDEX);
+    void drawCar(CarState);
     float timer = 0;
-    float acceleration = 0;
-    float velocity = 0;
-    float trans = 0;
     GLuint inputTexture;
     virtual const char* getVertexShader() override;
     virtual const char* getFragmentShader() override;
@@ -50,6 +46,10 @@ private:
     FloorShape floorShape;
     ObjShape carShape;
     ObjShape wheelShape;
+    CarBody& carBody;
+    Array<CarState> carStates;
+    int max_save_state;
+    int state_idx;
     ScopedPointer<OpenGLShaderProgram::Uniform> textureID;
 };
 

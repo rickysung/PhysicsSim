@@ -39,6 +39,8 @@
       <GROUP id="{74143CA1-C394-92E4-7A77-039F8948D3AF}" name="BaseObject">
         <FILE id="ZpZk6O" name="BaseObject.cpp" compile="1" resource="0" file="Source/BaseObject.cpp"/>
         <FILE id="c9TJH5" name="BaseObject.h" compile="0" resource="0" file="Source/BaseObject.h"/>
+        <FILE id="sBEBAS" name="CarBody.cpp" compile="1" resource="0" file="Source/CarBody.cpp"/>
+        <FILE id="SwhIRi" name="CarBody.h" compile="0" resource="0" file="Source/CarBody.h"/>
         <FILE id="coLxL6" name="RigidBody.cpp" compile="1" resource="0" file="Source/RigidBody.cpp"/>
         <FILE id="ZY8PDz" name="RigidBody.h" compile="0" resource="0" file="Source/RigidBody.h"/>
       </GROUP>

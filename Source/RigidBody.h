@@ -16,12 +16,7 @@ class RigidBody : public BaseObject
 {
 public:
     RigidBody(int width, int height);
-    double yaw;
-    double pitch;
-    double roll;
-    Array<BodyPoint> bodyPoints;
 public:
-    void draw(Graphics& g) override;
 };
 
 

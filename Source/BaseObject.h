@@ -12,8 +12,15 @@
 #define BASEOBJECT_H_INCLUDED
 #include "../JuceLibraryCode/JuceHeader.h"
 typedef Vector3D<float> Vector;
+typedef Matrix3D<float> Matrix;
 
 class RigidBody;
+enum class TIRE_INDEX{
+    FRONT_LEFT = 0,
+    FRONT_RIGHT,
+    REAR_LEFT,
+    REAR_RIGHT
+};
 class MechanicalPoint
 {
 };
@@ -43,8 +50,6 @@ public:
     virtual ~BaseObject(){}
 protected:
     Vector originPoint;
-    double yaw;
-    virtual void draw(Graphics& g) = 0;
 };
 
 

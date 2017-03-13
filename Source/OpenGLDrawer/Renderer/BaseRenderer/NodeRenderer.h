@@ -52,6 +52,7 @@ public:
         lightAmbientLoc = createUniform("light.ambient");
         lightDiffuseLoc = createUniform("light.diffuse");
         lightSpecularLoc = createUniform("light.specular");
+        isMaterialMode = createUniform("isMaterialMode");
     }
     void BindLabelTexture(GLuint inputTexture)
     {
@@ -110,6 +111,7 @@ protected:
     ScopedPointer<OpenGLShaderProgram::Uniform> lightAmbientLoc;
     ScopedPointer<OpenGLShaderProgram::Uniform> lightDiffuseLoc;
     ScopedPointer<OpenGLShaderProgram::Uniform> lightSpecularLoc;
+    ScopedPointer<OpenGLShaderProgram::Uniform> isMaterialMode;
     //    virtual Matrix getModelMatrixAtPosition(Matrix baseMatrix, float ns, float azi, float elv, float dis) = 0;
  
     void drawShape(Shape& shapeToDraw,

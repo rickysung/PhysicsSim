@@ -73,34 +73,49 @@ const char* ScreenRenderer::getFragmentShader()
     "in vec3 lightPos;\n"
     "\n"
     "uniform sampler2D Renderer;\n"
+    "uniform int isMaterialMode;\n"
     "uniform Material material;\n"
     "uniform Light light;\n"
     "\n"
     "void main()\n"
     "{\n"
-    "   vec3 viewPos = vec3(0.0, 0.0, 1.0);\n"
+    "   if(isMaterialMode>=1)\n"
+    "   {\n"
+    "       vec3 viewPos = vec3(0.0, 0.0, 1.0);\n"
     
     // Ambient
-    "   vec3 ambient = light.ambient * material.ambient;\n"
+    "       vec3 ambient = light.ambient * material.ambient;\n"
     
     // Diffuse
-    "   vec3 norm = normalize(FragNorm);\n"
-    "   vec3 lightDir = normalize(lightPos - FragPos);\n"
-    "   float diff = max(dot(norm, lightDir), -dot(norm, lightDir));\n"
-    "   vec3 diffuse = light.diffuse * (diff * material.diffuse);\n"
+    "       vec3 norm = normalize(FragNorm);\n"
+    "       vec3 lightDir = normalize(lightPos - FragPos);\n"
+    "       float diff = max(dot(norm, lightDir), -dot(norm, lightDir));\n"
+    "       vec3 diffuse = light.diffuse * (diff * material.diffuse);\n"
     
     // Specular
-    "   vec3 viewDir = normalize(viewPos - FragPos);\n"
-    "   vec3 reflectDir = reflect(-lightDir, norm);\n"
-    "   float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
-    "   vec3 specular = light.specular * (spec * material.specular);\n"
+    "       vec3 viewDir = normalize(viewPos - FragPos);\n"
+    "       vec3 reflectDir = reflect(-lightDir, norm);\n"
+    "       float spec = pow(max(dot(viewDir, reflectDir), -dot(viewDir, reflectDir)), material.shininess);\n"
+    "       vec3 specular = light.specular * (spec * material.specular);\n"
     "\n"
-    "   vec3 result = ambient + diffuse + specular;\n"
-    "   FragColor = vec4(result, 1.0f);\n"
+    "       vec3 result = ambient + diffuse + specular;\n"
+    "       FragColor = vec4(result, 1.0);\n"
+    "       if(isMaterialMode==2)\n"
+    "           FragColor = vec4(result, 0.5);\n"
+    "   }\n"
+    "   else\n"
+    "   {"
+    "       float zBuffer = gl_FragCoord.w;\n"
+    "       FragColor = vec4(1.0, 1.0, 1.0, (zBuffer*5)<1.0?(zBuffer*5):1.0);\n"
+    "       if(zBuffer<0.02)\n"
+    "           discard;\n"
+    "   }"
     "}";
 }
 Matrix ScreenRenderer::getViewMatrix()
 {
+    Matrix c = carBody.getCarState().getInverseLocationMatrix();
+    
     float yaw;
     float pch;
     float azi;
@@ -111,20 +126,14 @@ Matrix ScreenRenderer::getViewMatrix()
     dis = -camDistance;
     yaw = -camYaw;
     pch = -camPitch;
-    
     float cy = std::cos(yaw), cp = std::cos(pch);;
     float sy = std::sin(yaw), sp = std::sin(pch);;
     float ca = std::cos(azi), ce = std::cos(elv);
     float sa = std::sin(azi), se = std::sin(elv);
-    // Order of Distance * Elevation * Azimuth transform
-    Matrix c(1,0,0,0,
-             0,1,0,0,
-             0,0,1,0,
-             0,0,-trans,1);
     Matrix t(ca, -sa*se, -ce*sa, 0,
-             0, ce, -se, 0,
-             sa, ca*se, ca*ce, 0,
-             0, 0, dis, 1);
+                                                          0, ce, -se, 0,
+                                                          sa, ca*se, ca*ce, 0,
+                                                          0, 0, dis, 1);
     Matrix t2(1,0,0,0,
               0,cp,-sp,0,
               0,sp,cp,0,
@@ -154,8 +163,8 @@ Matrix ScreenRenderer::getInverseViewMatrix()
 }
 Matrix ScreenRenderer::getProjectionMatrix()
 {
-    float n = 0.01f;
-    float f = 2000.0f;
+    float n = 1.0f;
+    float f = 200.0f;
     float w = n * std::tan(viewAngleHorizon/2);
     float h = n * std::tan(viewAngleVertical/2);
     return Matrix::fromFrustum(-w, w, h, -h, n, f);
@@ -168,8 +177,8 @@ Matrix ScreenRenderer::getProjectionMatrix()
 }
 Matrix ScreenRenderer::getInverseProjectionMatrix()
 {
-    float n = 0.01f;
-    float f = 2000.0f;
+    float n = 1.0f;
+    float f = 200.0f;
     float w = n * std::tan(viewAngleHorizon/2);
     float h = n * std::tan(viewAngleVertical/2);
     return Matrix(w/n,  0,      0,  0,
@@ -190,6 +199,7 @@ Matrix ScreenRenderer::getTransformMatrix()
     return v * p;
 }
 ScreenRenderer::ScreenRenderer(OpenGLContext& glContext,
+                               CarBody& cb,
                                int screenWidth,
                                      int screenHeight) :
 SimRenderer(glContext, screenWidth, screenHeight),
@@ -197,7 +207,8 @@ screenShape(glContext),
 gridShape(glContext,0.8,8),
 floorShape(glContext),
 carShape(glContext, BinaryData::avent_obj, BinaryData::avent2_mtl),
-wheelShape(glContext, BinaryData::aventWheel_obj, BinaryData::aventWheel_mtl)
+wheelShape(glContext, BinaryData::aventWheel_obj, BinaryData::aventWheel_mtl),
+carBody(cb)
 {
     float verticalRatio = (float)screenWidth/screenHeight;
     Matrix t;
@@ -221,73 +232,77 @@ wheelShape(glContext, BinaryData::aventWheel_obj, BinaryData::aventWheel_mtl)
     ambientLoc->set(1.0f, 0.5f, 0.32f);
     diffuseLoc->set(1.0f, 0.5f, 0.32f);
     specularLoc->set(0.5f, 0.5f, 0.5f);
-    shineLoc->set(4.0f);
-    lightAmbientLoc->set(0.3f, 0.3f, 0.3f);
-    lightDiffuseLoc->set(0.5f, 0.5f, 0.5f);
+    shineLoc->set(2.0f);
+    lightAmbientLoc->set(0.1f, 0.1f, 0.1f);
+    lightDiffuseLoc->set(0.7f, 0.7f, 0.7f);
     lightSpecularLoc->set(1.0f, 1.0f, 1.0f);
-}
-void ScreenRenderer::drawCar()
-{
-    float wheelHeight = 0.31f;
-    float frontWheelBase = 1.16f;
-    float rearWheelBase = 1.54f;
-    float frontWheelTrack = 0.851f;
-    float rearWheelTrack = 0.85f;
-    float w = -trans/wheelHeight;
-    float cw = std::cos(w), sw = std::sin(w);
     
-    Matrix trs(1, 0, 0, 0,
-               0, 1, 0, 0,
-               0, 0, 1, 0,
-               0, wheelHeight, trans, 1);
-    Matrix rightRearWheel(1, 0, 0, 0,
-                          0, cw, -sw, 0,
-                          0, sw, cw, 0,
-                          rearWheelTrack, wheelHeight, trans - rearWheelBase, 1);
-    Matrix leftRearWheel(-1, 0, 0, 0,
-                         0, cw, -sw, 0,
-                         0, sw, cw, 0,
-                         -rearWheelTrack, wheelHeight, trans - rearWheelBase, 1);
-    Matrix rightFrontWheel(1, 0, 0, 0,
-                           0, cw, -sw, 0,
-                           0, sw, cw, 0,
-                           frontWheelTrack, wheelHeight, trans + frontWheelBase, 1);
-    Matrix leftFrontWheel(-1, 0, 0, 0,
-                          0, cw, -sw, 0,
-                          0, sw, cw, 0,
-                          -frontWheelTrack, wheelHeight, trans + frontWheelBase, 1);
+    max_save_state = 5;
+    state_idx = 0;
+}
+Matrix ScreenRenderer::getWheelMatrix(CarState state, TIRE_INDEX idx)
+{
+    switch (idx) {
+        case TIRE_INDEX::FRONT_LEFT:
+            return state.getWheelMatrix(-carBody.getFrontWheelTrack(), carBody.getFrontWheelBase(), static_cast<int>(idx), true);
+            break;
+        case TIRE_INDEX::FRONT_RIGHT:
+            return state.getWheelMatrix(carBody.getFrontWheelTrack(), carBody.getFrontWheelBase(), static_cast<int>(idx), true);
+            break;
+        case TIRE_INDEX::REAR_LEFT:
+            return state.getWheelMatrix(-carBody.getRearWheelTrack(), -carBody.getRearWheelBase(), static_cast<int>(idx), false);
+            break;
+        case TIRE_INDEX::REAR_RIGHT:
+            return state.getWheelMatrix(carBody.getRearWheelTrack(), -carBody.getRearWheelBase(), static_cast<int>(idx), false);
+            break;
+        default:
+            break;
+    }
+
+}
+void ScreenRenderer::drawCar(CarState state)
+{
+    Matrix trs = state.getLocationMatrix();
+    Matrix rearRightWheel = getWheelMatrix(state, TIRE_INDEX::REAR_RIGHT);
+    Matrix rearLeftWheel = getWheelMatrix(state, TIRE_INDEX::REAR_LEFT);
+    Matrix frontRightWheel = getWheelMatrix(state, TIRE_INDEX::FRONT_RIGHT);
+    Matrix frontLeftWheel = getWheelMatrix(state, TIRE_INDEX::FRONT_LEFT);
+    
     modelScale->set(1.0f);
     modelMatrix->setMatrix4(trs.mat, 1, false);
     bodyColour->set(1.0f,0.0f,0.0f,1.0f);
     carShape.draw(ambientLoc, diffuseLoc, specularLoc, shineLoc);
     bodyColour->set(0.3f,0.3f,0.3f,1.0f);
-    modelMatrix->setMatrix4(rightRearWheel.mat, 1, false);
+    
+    modelMatrix->setMatrix4((rearRightWheel*trs).mat, 1, false);
     wheelShape.draw(ambientLoc, diffuseLoc, specularLoc, shineLoc);
-    modelMatrix->setMatrix4(leftRearWheel.mat, 1, false);
+    
+    modelMatrix->setMatrix4((rearLeftWheel*trs).mat, 1, false);
     wheelShape.draw(ambientLoc, diffuseLoc, specularLoc, shineLoc);
-    modelMatrix->setMatrix4(rightFrontWheel.mat, 1, false);
+    
+    modelMatrix->setMatrix4((frontRightWheel*trs).mat, 1, false);
     wheelShape.draw(ambientLoc, diffuseLoc, specularLoc, shineLoc);
-    modelMatrix->setMatrix4(leftFrontWheel.mat, 1, false);
+    
+    modelMatrix->setMatrix4((frontLeftWheel*trs).mat, 1, false);
     wheelShape.draw(ambientLoc, diffuseLoc, specularLoc, shineLoc);
 }
-void ScreenRenderer::stop()
+void ScreenRenderer::saveState()
 {
-    trans = 0;
-    acceleration = 0;
-    velocity = 0;
-}
-void ScreenRenderer::accel(float val)
-{
-    acceleration += val;
+    CarState t(carBody.getCarState());
+    if(carStates.size()==max_save_state)
+    {
+        carStates.set(state_idx,t);
+        state_idx=(++state_idx)%max_save_state;
+    }
+    else
+    {
+        carStates.add(t);
+    }
 }
 void ScreenRenderer::draw()
 {
+    int i, n;
     Matrix t;
-    timer++;
-    velocity += acceleration;
-    trans += velocity;
-    if(trans>1000)
-        trans = 0;
     Matrix u(1, 0, 0, 0,
              0, 1, 0, 0,
              0, 0, 1, 0,
@@ -300,12 +315,22 @@ void ScreenRenderer::draw()
     viewMatrix->setMatrix4(t.mat, 1, false);
     modelMatrix->setMatrix4(u.mat, 1, false);
     modelScale->set(2.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, width*desktopScale, height*desktopScale);
-    bodyColour->set(1.0f,1.0f,1.0f,1.0f);
+    bodyColour->set(0.0f,0.0f,1.0f,1.0f);
+    isMaterialMode->set(0);
     floorShape.draw();
-    drawCar();
-//    screenShape.draw();
+    isMaterialMode->set(1);
+    drawCar(carBody.getCarState());
+    n = carStates.size();
+    isMaterialMode->set(2);
+    for(i=0 ; i<n ; i++)
+    {
+        drawCar(carStates[i]);
+    }
+    isMaterialMode->set(0);
 }
