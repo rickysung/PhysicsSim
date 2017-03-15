@@ -20,7 +20,7 @@ public:
     SimRenderer(OpenGLContext& glContext,
                   int screenWidth,
                   int screenHeight) :
-    OpenGLDrawer(glContext, screenWidth, screenHeight, 3),
+    OpenGLDrawer(glContext, screenWidth, screenHeight, 1),
     flatObjectShape(glContext),
     objectShape(glContext),
     channelShape(glContext),

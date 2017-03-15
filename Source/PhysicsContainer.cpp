@@ -67,10 +67,26 @@ void PhysicsContainer::paint (Graphics& g)
 {
     //[UserPrePaint] Add your own custom painting code here..
     //int n = Bodys.size();
-    g.setColour(Colours::white);
-//    drawGraph(g, "accel", 10, 10, 200, 100, t.size(), t.getRawDataPointer());
-//    drawGraph(g, "accel", 10, 120, 200, 100, v.size(), v.getRawDataPointer());
-//    drawGraph(g, "accel", 10, 230, 200, 100, a.size(), a.getRawDataPointer());
+//    Array<Vector>& points = carRenderer->getRoadPoints();
+//    Vector carLoc = carBody->getCarState().getLocation();
+//    Vector carDir = carBody->getCarState().getDirection();
+//    Vector p;
+//    int n = points.size();
+//    bool isIntersact = false;
+//    int i;
+//    float mag =5.0f;
+//    float cx = getWidth()/2;
+//    float cy = getHeight()/2;
+//    g.setColour(Colours::white);
+//    for(i=0 ; i<n-1 ; i+=2)
+//    {
+//        g.setColour(Colours::white);
+//        g.drawLine(cx + points[i].x*mag, cy - points[i].z*mag,cx + points[i+1].x*mag, cy - points[i+1].z*mag);
+//    }
+//    g.setColour(Colours::red);
+//    g.drawEllipse(cx + carLoc.x*mag-1, cy - carLoc.z*mag-1, 2, 2, 1);
+//    g.setColour(Colours::red);
+//    g.drawEllipse(cx + (carLoc.x+1.5*carDir.x)*mag, cy - (carLoc.z+carDir.z*1.5)*mag, 2, 2, 1);
     //[/UserPrePaint]
 
     //[UserPaint] Add your own custom painting code here..
@@ -97,13 +113,13 @@ void PhysicsContainer::mouseDown (const MouseEvent& e)
     //[UserCode_mouseDown] -- Add your code here...
     if(!e.mods.isCommandDown())
     {
-        startAzi = screenRenderer->getCameraAzimuth();
-        startElv = screenRenderer->getCameraElevation();
+        startAzi = carRenderer->getCameraAzimuth();
+        startElv = carRenderer->getCameraElevation();
     }
     else
     {
-        startYaw = screenRenderer->getCameraYaw();
-        startPch = screenRenderer->getCameraPitch();
+        startYaw = carRenderer->getCameraYaw();
+        startPch = carRenderer->getCameraPitch();
     }
     //[/UserCode_mouseDown]
 }
@@ -116,13 +132,13 @@ void PhysicsContainer::mouseDrag (const MouseEvent& e)
     my = e.getDistanceFromDragStartY() * 0.01f;
     if(!e.mods.isCommandDown())
     {
-        screenRenderer->setCameraAzimuth(startAzi - mx);
-        screenRenderer->setCameraElevation(startElv + my);
+        carRenderer->setCameraAzimuth(startAzi - mx);
+        carRenderer->setCameraElevation(startElv + my);
     }
     else
     {
-        screenRenderer->setCameraYaw(startYaw + mx);
-        screenRenderer->setCameraPitch(startPch + my);
+        carRenderer->setCameraYaw(startYaw + mx);
+        carRenderer->setCameraPitch(startPch + my);
     }
     //[/UserCode_mouseDrag]
 }
@@ -130,9 +146,9 @@ void PhysicsContainer::mouseDrag (const MouseEvent& e)
 void PhysicsContainer::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& wheel)
 {
     //[UserCode_mouseWheelMove] -- Add your code here...
-    float dis = screenRenderer->getCameraDistance();
+    float dis = carRenderer->getCameraDistance();
     float diff = -wheel.deltaY;
-    screenRenderer->setCameraDistance(dis + diff);
+    carRenderer->setCameraDistance(dis + diff);
     //[/UserCode_mouseWheelMove]
 }
 
@@ -179,7 +195,7 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 void PhysicsContainer::timerCallback()
 {
     if(carBody->isCheck(7.0f))
-        screenRenderer->saveState();
+        carRenderer->saveState();
 }
 void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float values[])
 {
@@ -215,18 +231,38 @@ void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, 
 }
 void PhysicsContainer::initialise()
 {
-    screenRenderer = new ScreenRenderer(openGLContext, *carBody, getWidth(), getHeight());
+    carRenderer = new CarRenderer(openGLContext, *carBody, getWidth(), getHeight());
 }
 void PhysicsContainer::render()
 {
-//    if(screenRenderer->getAcceleration()!=0)
-//    {
-//        v.add(screenRenderer->getVelocity());
-//        a.add(screenRenderer->getAcceleration());
-//        t.add(screenRenderer->getLocation());
-//    }
+    int i;
+    int idx;
+    int n;
+    int cnt=0;
+    int m = -1;
+    bool isIntersact = false;
+    Array<Vector>& points = carRenderer->getRoadPoints();
+    n = points.size();
+    idx = lastIndex;
+    Vector p;
+    for(i=0 ; i<n-1 ; i+=2)
+    {
+        cnt++;
+        if(!isIntersact)
+        {
+            isIntersact = carBody->getCarState().setSensorLocation(
+               Line<float>(points[idx].x, points[idx].z,
+                           points[idx+1].x, points[idx+1].z));
+            lastIndex = idx;
+        }
+        else
+            break;
+        m*=-1;
+        idx = (idx + i*m)%n;
+    }
+    printf("%d\n",cnt);
     carBody->progress();
-    screenRenderer->draw();
+    carRenderer->draw();
     repaint();
 }
 void PhysicsContainer::shutdown()

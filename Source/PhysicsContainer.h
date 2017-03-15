@@ -24,7 +24,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "CarBody.h"
 #include "OpenGLDrawer/OpenGLDrawer.h"
-#include "OpenGLDrawer/Renderer/ScreenRenderer.h"
+#include "OpenGLDrawer/Renderer/CarRenderer.h"
 //[/Headers]
 
 
@@ -66,10 +66,10 @@ private:
     //[UserVariables]   -- You can add your own custom variables in this section.
     void drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float* v);
     ScopedPointer<CarBody> carBody;
-    ScopedPointer<ScreenRenderer> screenRenderer;
+    ScopedPointer<CarRenderer> carRenderer;
     float startAzi;
     float startElv;
-
+    int lastIndex;
     float startYaw;
     float startPch;
     bool isTimerStarted = false;

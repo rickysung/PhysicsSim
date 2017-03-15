@@ -46,7 +46,7 @@ GaussianBlurRenderer::GaussianBlurRenderer(OpenGLContext& glContext,
                                      int screenHeight,
                                      int amount) :
 OpenGLDrawer(glContext, screenWidth, screenHeight, 1),
-screenShape(glContext),
+screenShape(glContext, 0, 0, 0.5, 0.5),
 Amount(amount)
 {
     initializeShader(getVertexShader(), getFragmentShader());

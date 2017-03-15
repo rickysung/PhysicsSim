@@ -1003,6 +1003,49 @@ struct EllipseBandVertex : public ShapeVertex
 };
 struct RectangleVertex : ShapeVertex
 {
+    void initShape(OpenGLContext& context, float x, float y, float w, float h)
+    {
+        Vertex vert;
+        Colour g = Colour(GRID_LINE);
+        vert = {
+            {x-w,y+h,0},
+            {0,0,1},
+            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+            {0.0,1.0}};
+        vertices.add(vert);
+        vert = {
+            {x+w,y+h,0},
+            {0,0,1},
+            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+            {1.0,1.0}};
+        vertices.add(vert);
+        vert = {
+            {x+w,y-h,0},
+            {0,0,1},
+            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+            {1.0,0.0}};
+        vertices.add(vert);
+        vert = {
+            {x-w,y-h,0},
+            {0,0,1},
+            {g.getFloatRed(), g.getFloatGreen(), g.getFloatBlue(), g.getFloatAlpha()},
+            {0.0,0.0}};
+        vertices.add(vert);
+        indecies.add(0);
+        indecies.add(1);
+        indecies.add(2);
+        indecies.add(0);
+        indecies.add(2);
+        indecies.add(3);
+        context.extensions.glGenVertexArrays(1, &shapeVAO);
+        context.extensions.glGenBuffers (1, &shapeVBO);
+        context.extensions.glGenBuffers (1, &shapeEBO);
+        context.extensions.glBindVertexArray(shapeVAO);
+        putData(context, vertices, indecies);
+        enableVertexArray(context);
+        context.extensions.glBindVertexArray(0);
+        vertexSize = indecies.size();
+    }
     void initShape(OpenGLContext& context, float cof1=1, float cof2 = 1, float cof3 = 0) override
     {
         Vertex vert;
@@ -1052,7 +1095,6 @@ struct RoadVertex : ShapeVertex
     Vector buildCurveRoad(Vector& origin, Vector direction, float radius, float rotateAngle, bool isCCW)
     {
         direction = direction.normalised();
-        float width = 2.0f;
         float diff = 5.01f*M_PI/180.0f;
         float angle;
         Vector left1, right1;
@@ -1071,6 +1113,10 @@ struct RoadVertex : ShapeVertex
                 right2 = Vector(direction.z,direction.y,-direction.x);
                 buildArcLine(rotateOrigin, right1*(radius - width), right2*(radius - width), 1);
                 buildArcLine(rotateOrigin, right1*(radius + width), right2*(radius + width), 1);
+                pointArray.add(rotateOrigin + right1*(radius - width));
+                pointArray.add(rotateOrigin + right2*(radius - width));
+                pointArray.add(rotateOrigin + right1*(radius + width));
+                pointArray.add(rotateOrigin + right2*(radius + width));
             }
             origin = rotateOrigin + right2*radius;
         }
@@ -1086,6 +1132,11 @@ struct RoadVertex : ShapeVertex
                 right2 = Vector(direction.z,direction.y,-direction.x);
                 buildArcLine(rotateOrigin, left1*(radius - width), left2*(radius - width), 1);
                 buildArcLine(rotateOrigin, left1*(radius + width), left2*(radius + width), 1);
+                
+                pointArray.add(rotateOrigin + left1*(radius - width));
+                pointArray.add(rotateOrigin + left2*(radius - width));
+                pointArray.add(rotateOrigin + left1*(radius + width));
+                pointArray.add(rotateOrigin + left2*(radius + width));
             }
             origin = rotateOrigin + left2*radius;
         }
@@ -1094,11 +1145,15 @@ struct RoadVertex : ShapeVertex
     Vector buildStraightRoad(Vector& origin, Vector direction, float length)
     {
         direction = direction.normalised();
-        float width = 2.0f;
         Vector left = Vector(-direction.z,direction.y,direction.x);
         Vector right = Vector(direction.z,direction.y,-direction.x);
         buildStraightLine(origin + left*width, origin + direction*length + left*width, 1, Colours::red);
         buildStraightLine(origin + right*width, origin + direction*length + right*width, 1, Colours::red);
+        
+        pointArray.add(origin + left*width);
+        pointArray.add(origin + direction*length + left*width);
+        pointArray.add(origin + right*width);
+        pointArray.add(origin + direction*length + right*width);
         origin += direction*length;
         return direction;
     }
@@ -1119,10 +1174,22 @@ struct RoadVertex : ShapeVertex
         dir = buildCurveRoad(origin,dir,7,M_PI_2,false);
         dir = buildStraightRoad(origin,dir,20.0f);
         dir = buildCurveRoad(origin,dir,7,M_PI_4,true);
-        dir = buildStraightRoad(origin,dir,2.0f);
+        dir = buildStraightRoad(origin,dir,3.0f);
         dir = buildCurveRoad(origin,dir,7,M_PI_2,false);
-        dir = buildStraightRoad(origin,dir,2.0f);
+        dir = buildStraightRoad(origin,dir,3.0f);
         dir = buildCurveRoad(origin,dir,7,M_PI_4,true);
+        dir = buildStraightRoad(origin,dir,2.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI,false);
+        dir = buildStraightRoad(origin,dir,5.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_4,true);
+        dir = buildStraightRoad(origin,dir,4.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_4,false);
+        dir = buildStraightRoad(origin,dir,4.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI,true);
+        dir = buildCurveRoad(origin,dir,7,M_PI_4,true);
+        dir = buildCurveRoad(origin,dir,7,M_PI,false);
+        dir = buildStraightRoad(origin,dir,55.0f);
+        dir = buildCurveRoad(origin,dir,7,M_PI_2,false);
         context.extensions.glGenVertexArrays(1, &shapeVAO);
         context.extensions.glGenBuffers (1, &shapeVBO);
         context.extensions.glGenBuffers (1, &shapeEBO);
@@ -1132,6 +1199,8 @@ struct RoadVertex : ShapeVertex
         context.extensions.glBindVertexArray(0);
         vertexSize = indecies.size();
     }
+    float width = 3.0f;
+    Array<Vector> pointArray;
 };
 struct FloorVertex : ShapeVertex
 {

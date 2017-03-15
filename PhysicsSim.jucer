@@ -17,9 +17,11 @@
           <GROUP id="{B72ABD95-108F-2169-6A38-DB77791EC615}" name="BaseRenderer">
             <FILE id="T7OVzD" name="NodeRenderer.h" compile="0" resource="0" file="Source/OpenGLDrawer/Renderer/BaseRenderer/NodeRenderer.h"/>
           </GROUP>
-          <FILE id="C2aVE8" name="ScreenRenderer.cpp" compile="1" resource="0"
+          <FILE id="C2aVE8" name="CarRenderer.cpp" compile="1" resource="0" file="Source/OpenGLDrawer/Renderer/CarRenderer.cpp"/>
+          <FILE id="H4wdlJ" name="CarRenderer.h" compile="0" resource="0" file="Source/OpenGLDrawer/Renderer/CarRenderer.h"/>
+          <FILE id="r2f89q" name="ScreenRenderer.cpp" compile="1" resource="0"
                 file="Source/OpenGLDrawer/Renderer/ScreenRenderer.cpp"/>
-          <FILE id="H4wdlJ" name="ScreenRenderer.h" compile="0" resource="0"
+          <FILE id="m4k6kh" name="ScreenRenderer.h" compile="0" resource="0"
                 file="Source/OpenGLDrawer/Renderer/ScreenRenderer.h"/>
         </GROUP>
         <FILE id="ML5qDu" name="GaussianBlurRenderer.cpp" compile="1" resource="0"

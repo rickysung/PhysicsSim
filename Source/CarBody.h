@@ -16,9 +16,41 @@ struct CarState
 {
     float handleAngle;
     Vector location;
+    float ld =1.0f, sensorAngle = 0;
     float theta;
     float wheelAngle[4];
-    
+    bool setSensorLocation(Line<float> l)
+    {
+        Vector intersect;
+        Vector s1 = Vector(-std::cos(theta),0,-std::sin(theta));
+        Vector s2 = Vector(std::cos(theta),0,std::sin(theta));
+        Vector left, right, center;
+        center  = location + Vector(-std::sin(theta),0,std::cos(theta)) * 5;
+        left = center + s1*3.5f;
+        right = center + s2*3.5f;
+        s1 = left;
+        s2 = right;
+        if(l.intersects(Line<float>(s1.x, s1.z, s2.x, s2.z)))
+        {
+            Point<float> p = l.getIntersection(Line<float>(s1.x, s1.z, s2.x, s2.z));
+            intersect = Vector(p.x, 0, p.y);
+            sensorAngle = std::atan((intersect-center).length()/(center-location).length());
+            if((intersect-left).length()>(intersect-right).length())
+                sensorAngle = -sensorAngle;
+            ld = (intersect-location).length();
+            //printf("%.2lf %.2lf %.2lf %.2lf %.2lf %.2lf---\n",intersect.x, intersect.z, s1.x, s1.z, s2.x, s2.z);
+            return true;
+        }
+        return false;
+    }
+    Vector getLocation()
+    {
+        return location;
+    }
+    Vector getDirection()
+    {
+        return Vector(-std::sin(theta), 0, std::cos(theta));
+    }
     Matrix getLocationMatrix()
     {
         float cr = std::cos(theta);
@@ -65,6 +97,7 @@ struct CarState
     void progress(float vx, float vz, float wheelVelocity, float yawrate)
     {
         int i;
+        handleAngle = std::atan(2 * 2.7f * std::sin(sensorAngle)/ld);
         for(i=0 ; i<4 ; i++)
             wheelAngle[i] += wheelVelocity;
         location.x += vx;

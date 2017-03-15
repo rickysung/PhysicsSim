@@ -404,6 +404,10 @@ struct RoadShape : public Shape
         glDrawElements(GL_TRIANGLES, roadVertex.vertexSize, GL_UNSIGNED_INT, 0);
         context.extensions.glBindVertexArray(0);
     }
+    Array<Vector>& getRoadPoints()
+    {
+        return roadVertex.pointArray;
+    }
 private:
     RoadVertex roadVertex;
     
@@ -449,9 +453,9 @@ private:
 struct ScreenShape : public Shape
 {
 public:
-    ScreenShape(OpenGLContext& openGLContext) : Shape(openGLContext)
+    ScreenShape(OpenGLContext& openGLContext, float x, float y, float w, float h) : Shape(openGLContext)
     {
-        quadVertex.initShape(context);
+        quadVertex.initShape(context, x, y, w, h);
     }
     ~ScreenShape()
     {
