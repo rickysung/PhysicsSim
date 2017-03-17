@@ -40,13 +40,8 @@ PhysicsContainer::PhysicsContainer ()
 
 
     //[Constructor] You can add your own custom stuff here..
-    carBody = new CarBody(0.31f,
-                          1.16f,
-                          1.54f,
-                          0.851f,
-                          0.85f);
     setWantsKeyboardFocus(true);
-
+    addCarBody(0.31f, 1.14f, 1.56, 0.851f, 0.85f);
     //[/Constructor]
 }
 
@@ -156,35 +151,35 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 {
     //[UserCode_keyPressed] -- Add your code here...
 
-    if(key==KeyPress::downKey)
-    {
-        carBody->forward(-0.01);
-        return true;
-    }
-    else if(key==KeyPress::upKey)
-    {
-        if(!isTimerRunning())
-        {
-            startTimer(10);
-        }
-        carBody->forward(0.01);
-        return true;
-    }
-    else if(key==KeyPress::spaceKey)
-    {
-        stopTimer();
-        return true;
-    }
-    else if(key==KeyPress::leftKey)
-    {
-        carBody->steer(0.05);
-        return true;
-    }
-    else if(key==KeyPress::rightKey)
-    {
-        carBody->steer(-0.05);
-        return true;
-    }
+//    if(key==KeyPress::downKey)
+//    {
+//        carBody->forward(-0.01);
+//        return true;
+//    }
+//    else if(key==KeyPress::upKey)
+//    {
+//        if(!isTimerRunning())
+//        {
+//            startTimer(10);
+//        }
+//        carBody->forward(0.01);
+//        return true;
+//    }
+//    else if(key==KeyPress::spaceKey)
+//    {
+//        stopTimer();
+//        return true;
+//    }
+//    else if(key==KeyPress::leftKey)
+//    {
+//        carBody->steer(0.05);
+//        return true;
+//    }
+//    else if(key==KeyPress::rightKey)
+//    {
+//        carBody->steer(-0.05);
+//        return true;
+//    }
     return false;  // Return true if your handler uses this key event, or false to allow it to be passed-on.
     //[/UserCode_keyPressed]
 }
@@ -192,10 +187,26 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
+void PhysicsContainer::addCarBody(float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheelTrack, float rearWheelTrack)
+{
+    
+    ScopedPointer<CarBody> carBody = new CarBody(wheelHeight,
+                          frontWheelBase,
+                          rearWheelBase,
+                          frontWheelTrack,
+                          rearWheelTrack);
+    carBodys.add(carBody);
+}
 void PhysicsContainer::timerCallback()
 {
-    if(carBody->isCheck(7.0f))
-        carRenderer->saveState();
+    int i;
+    ScopedPointer<CarBody> carBody;
+    for(i=0 ; i<carBodys.size() ; i++)
+    {
+        carBody = carBodys.getUnchecked(i);
+        if(carBody->isCheck(7.0f))
+            carRenderer->saveState();
+    }
 }
 void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float values[])
 {
@@ -229,31 +240,44 @@ void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, 
         }
     }
 }
-void PhysicsContainer::initialise()
+void PhysicsContainer::sensing(CarBody* carBody)
 {
-    carRenderer = new CarRenderer(openGLContext, *carBody, getWidth(), getHeight());
-}
-void PhysicsContainer::render()
-{
-    int i;
-    int n;
-    bool isIntersact = false;
+    int i, n;
     Array<Vector>& points = carRenderer->getRoadPoints();
     n = points.size();
-    Vector p;
+    bool isIntersact = false;
     for(i=0 ; i<n-1 ; i+=2)
     {
         if(!isIntersact)
         {
             isIntersact = carBody->getCarState().setSensorLocation(
-               Line<float>(points[i].x, points[i].z,
-                           points[i+1].x, points[i+1].z));
+                                                                   Line<float>(points[i].x, points[i].z,
+                                                                               points[i+1].x, points[i+1].z));
         }
         else
             break;
     }
-    carBody->progress();
-    carRenderer->draw();
+}
+void PhysicsContainer::initialise()
+{
+    carRenderer = new CarRenderer(openGLContext, getWidth(), getHeight());
+}
+void PhysicsContainer::render()
+{
+    int i;
+    int n;
+    CarBody* carBody;
+    Vector p;
+    n = carBodys.size();
+    for(i=0 ; i<n ; i++)
+    {
+        carBody = carBodys.getUnchecked(i);
+        sensing(carBody);
+        carBody->progress();
+        carRenderer->setCarBody(carBody);
+        
+        carRenderer->draw();
+    }
     repaint();
 }
 void PhysicsContainer::shutdown()

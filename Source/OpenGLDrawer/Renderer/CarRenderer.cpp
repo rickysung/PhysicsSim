@@ -148,7 +148,7 @@ Matrix CarRenderer::getViewMatrix()
 }
 Matrix CarRenderer::getViewMatrix(float camy, float camp, float cama, float came, float camd)
 {
-    Matrix c = carBody.getCarState().getInverseLocationMatrix();
+    Matrix c = carBody->getCarState().getInverseLocationMatrix();
     
     float yaw;
     float pch;
@@ -235,7 +235,6 @@ Matrix CarRenderer::getTransformMatrix()
     return v * p;
 }
 CarRenderer::CarRenderer(OpenGLContext& glContext,
-                               CarBody& cb,
                                int screenWidth,
                                      int screenHeight) :
 SimRenderer(glContext, screenWidth, screenHeight),
@@ -244,8 +243,7 @@ gridShape(glContext,0.8,8),
 floorShape(glContext),
 carShape(glContext, BinaryData::avent_obj, BinaryData::avent2_mtl),
 wheelShape(glContext, BinaryData::aventWheel_obj, BinaryData::aventWheel_mtl),
-roadShape(glContext),
-carBody(cb)
+roadShape(glContext)
 {
     float verticalRatio = (float)screenWidth/screenHeight;
     Matrix t;
@@ -278,20 +276,24 @@ carBody(cb)
     max_save_state = 5;
     state_idx = 0;
 }
+void CarRenderer::setCarBody(CarBody* cb)
+{
+    carBody = cb;
+}
 Matrix CarRenderer::getWheelMatrix(CarState state, TIRE_INDEX idx)
 {
     switch (idx) {
         case TIRE_INDEX::FRONT_LEFT:
-            return state.getWheelMatrix(-carBody.getFrontWheelTrack(), carBody.getFrontWheelBase(), static_cast<int>(idx), true);
+            return state.getWheelMatrix(-carBody->getFrontWheelTrack(), carBody->getFrontWheelBase(), static_cast<int>(idx), true);
             break;
         case TIRE_INDEX::FRONT_RIGHT:
-            return state.getWheelMatrix(carBody.getFrontWheelTrack(), carBody.getFrontWheelBase(), static_cast<int>(idx), true);
+            return state.getWheelMatrix(carBody->getFrontWheelTrack(), carBody->getFrontWheelBase(), static_cast<int>(idx), true);
             break;
         case TIRE_INDEX::REAR_LEFT:
-            return state.getWheelMatrix(-carBody.getRearWheelTrack(), -carBody.getRearWheelBase(), static_cast<int>(idx), false);
+            return state.getWheelMatrix(-carBody->getRearWheelTrack(), -carBody->getRearWheelBase(), static_cast<int>(idx), false);
             break;
         case TIRE_INDEX::REAR_RIGHT:
-            return state.getWheelMatrix(carBody.getRearWheelTrack(), -carBody.getRearWheelBase(), static_cast<int>(idx), false);
+            return state.getWheelMatrix(carBody->getRearWheelTrack(), -carBody->getRearWheelBase(), static_cast<int>(idx), false);
             break;
         default:
             break;
@@ -326,7 +328,7 @@ void CarRenderer::drawCar(CarState state)
 }
 void CarRenderer::saveState()
 {
-    CarState t(carBody.getCarState());
+    CarState t(carBody->getCarState());
     if(carStates.size()==max_save_state)
     {
         carStates.set(state_idx,t);
@@ -354,7 +356,7 @@ void CarRenderer::paintGL()
     isMaterialMode->set(1);
     roadShape.draw();
     modelMode->set(1);
-    drawCar(carBody.getCarState());
+    drawCar(carBody->getCarState());
     n = carStates.size();
     isMaterialMode->set(2);
     for(i=0 ; i<n ; i++)

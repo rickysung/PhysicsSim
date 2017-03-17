@@ -5,6 +5,9 @@
               jucerVersion="4.3.0">
   <MAINGROUP id="Vc2Ney" name="PhysicsSim">
     <GROUP id="{11E7D4EF-A901-87AC-EEA4-5A82F14921E2}" name="Source">
+      <FILE id="Ji7gC0" name="SettingWindow.cpp" compile="1" resource="0"
+            file="Source/SettingWindow.cpp"/>
+      <FILE id="WgktH8" name="SettingWindow.h" compile="0" resource="0" file="Source/SettingWindow.h"/>
       <GROUP id="{EE8451D7-11E1-F040-F7B8-D110286DF3D4}" name="Resources">
         <FILE id="QWFJGC" name="avent.mtl" compile="0" resource="1" file="Source/Resources/avent.mtl"/>
         <FILE id="JsWpAy" name="avent.obj" compile="0" resource="1" file="Source/Resources/avent.obj"/>

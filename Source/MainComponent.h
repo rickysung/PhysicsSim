@@ -9,6 +9,7 @@
 #ifndef MAINCOMPONENT_H_INCLUDED
 #define MAINCOMPONENT_H_INCLUDED
 
+#include "SettingWindow.h"
 #include "PhysicsContainer.h"
 #include "../JuceLibraryCode/JuceHeader.h"
 
@@ -30,6 +31,7 @@ public:
 
 private:
     ScopedPointer<PhysicsContainer> physicscontainer;
+    ScopedPointer<SettingWindow> settingWindow;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainContentComponent)
 };

@@ -17,7 +17,6 @@ class CarRenderer : public SimRenderer
 {
 public:
     CarRenderer(OpenGLContext& glContext,
-                   CarBody& carBody,
                       int screenWidth,
                    int screenHeight);
     void draw() override;
@@ -28,6 +27,7 @@ public:
     void saveState();
     float getTimer() { return timer; }
     
+    void setCarBody(CarBody*);
     Matrix getTransformMatrix() override;
     Matrix getInverseTransformMatrix() override;
     Matrix getViewMatrix() override;
@@ -51,7 +51,7 @@ private:
     ObjShape carShape;
     ObjShape wheelShape;
     RoadShape roadShape;
-    CarBody& carBody;
+    ScopedPointer<CarBody> carBody;
     Array<CarState> carStates;
     int max_save_state;
     int state_idx;
