@@ -236,31 +236,22 @@ void PhysicsContainer::initialise()
 void PhysicsContainer::render()
 {
     int i;
-    int idx;
     int n;
-    int cnt=0;
-    int m = -1;
     bool isIntersact = false;
     Array<Vector>& points = carRenderer->getRoadPoints();
     n = points.size();
-    idx = lastIndex;
     Vector p;
     for(i=0 ; i<n-1 ; i+=2)
     {
-        cnt++;
         if(!isIntersact)
         {
             isIntersact = carBody->getCarState().setSensorLocation(
-               Line<float>(points[idx].x, points[idx].z,
-                           points[idx+1].x, points[idx+1].z));
-            lastIndex = idx;
+               Line<float>(points[i].x, points[i].z,
+                           points[i+1].x, points[i+1].z));
         }
         else
             break;
-        m*=-1;
-        idx = (idx + i*m)%n;
     }
-    printf("%d\n",cnt);
     carBody->progress();
     carRenderer->draw();
     repaint();
