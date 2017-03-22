@@ -24,6 +24,27 @@
 
 
 //[MiscUserDefs] You can add your own user definitions and misc code here...
+void kinematicMovement(CarBody& carBody, CarState& carState)
+{
+    float rearWheelBase = carBody.getRearWheelBase();
+    float frontWheelBase = carBody.getFrontWheelBase();
+    float wheelHeight = carBody.getWheelHeight();
+    float velocity = carBody.getVelocity();
+    float yawrate = carState.yawRate;
+    float radius = carState.handleAngle==0?0:((frontWheelBase + rearWheelBase)/std::tan(carState.handleAngle));
+    float vx;
+    float vz;
+    float d = carState.handleAngle;
+    float t = carState.theta;
+    yawrate = radius==0?0:(velocity/radius);
+    vx = -velocity * std::sin(t) - rearWheelBase * yawrate * std::cos(t+d);
+    vz = velocity * std::cos(t) - rearWheelBase * yawrate * std::sin(t+d);
+    carState.progress(vx, vz, yawrate, velocity/wheelHeight);
+}
+void dynamicMovement(CarBody& carBody, CarState& carState)
+{
+    
+}
 //[/MiscUserDefs]
 
 //==============================================================================
@@ -41,7 +62,8 @@ PhysicsContainer::PhysicsContainer ()
 
     //[Constructor] You can add your own custom stuff here..
     setWantsKeyboardFocus(true);
-    addCarBody(Colours::red, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
+    addCarBody(Colours::white,
+               0.31f, 1.14f, 1.56f, 0.851f, 0.85f, kinematicMovement);
    // addCarBody(Colours::blue, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
    // addCarBody(Colours::green, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
     //[/Constructor]
@@ -198,14 +220,14 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
-void PhysicsContainer::addCarBody(Colour bc, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheelTrack, float rearWheelTrack)
+void PhysicsContainer::addCarBody(Colour bc, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheelTrack, float rearWheelTrack, void (*ctrl)(CarBody&, CarState&))
 {
     
     CarBody* carBody = new CarBody(bc, wheelHeight,
                           frontWheelBase,
                           rearWheelBase,
                           frontWheelTrack,
-                          rearWheelTrack);
+                                   rearWheelTrack, ctrl);
     carBodys.add(carBody);
 }
 void PhysicsContainer::timerCallback()

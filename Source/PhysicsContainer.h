@@ -47,7 +47,7 @@ public:
 
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
-    void addCarBody(Colour, float, float, float, float, float);
+    void addCarBody(Colour, float, float, float, float, float, void (*)(CarBody&, CarState&));
     void initialise() override;
     void render() override;
     void shutdown() override;
@@ -68,7 +68,7 @@ private:
     //
     void drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float* v);
     OwnedArray<CarBody> carBodys;
-    ScopedPointer<CarBody> focusedCar;
+    CarBody* focusedCar;
     ScopedPointer<CarRenderer> carRenderer;
     float startAzi;
     float startElv;

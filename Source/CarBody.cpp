@@ -9,7 +9,7 @@
 */
 
 #include "CarBody.h"
-CarBody::CarBody(Colour c, float wh, float fwb, float rwb, float fwt, float rwt) : bodyColour(c), wheelHeight(wh), frontWheelBase(fwb), rearWheelBase(rwb), frontWheelTrack(fwt), rearWheelTrack(rwt)
+CarBody::CarBody(Colour c, float wh, float fwb, float rwb, float fwt, float rwt, void (*ctlr)(CarBody&, CarState&)) : bodyColour(c), wheelHeight(wh), frontWheelBase(fwb), rearWheelBase(rwb), frontWheelTrack(fwt), rearWheelTrack(rwt), controller(ctlr)
 {
     carState.location = Vector(0,wheelHeight,0);
     yawrate = 0;
@@ -25,8 +25,8 @@ CarBody::CarBody(Colour c, float wh, float fwb, float rwb, float fwt, float rwt)
 bool CarBody::setSensorLocation(Line<float> l)
 {
     Vector intersect;
-    Vector s1 = Vector(-std::cos(carState.theta),0,-std::sin(carState.theta));
-    Vector s2 = Vector(std::cos(carState.theta),0,std::sin(carState.theta));
+    Vector s1 = Vector(-std::cos(carState.theta), 0, -std::sin(carState.theta));
+    Vector s2 = Vector( std::cos(carState.theta), 0,  std::sin(carState.theta));
     Vector left, right, center;
     center  = carState.location + Vector(-std::sin(carState.theta),0,std::cos(carState.theta)) * 4.5f;
     left = center + s1*2.5f;
@@ -92,15 +92,16 @@ void CarBody::steer(float val)
 void CarBody::progress()
 {
     float radius = carState.handleAngle==0?0:((frontWheelBase + rearWheelBase)/std::tan(carState.handleAngle));
+    
     float vx;
     float vz;
-    float handleAngle;
     float d = carState.handleAngle;
     float t = carState.theta;
     yawrate = radius==0?0:(velocity/radius);
     vx = -velocity * std::sin(t) - rearWheelBase * yawrate * std::cos(t+d);
     vz = velocity * std::cos(t) - rearWheelBase * yawrate * std::sin(t+d);
-    handleAngle = std::atan(2 * (frontWheelBase+rearWheelBase) * std::sin(sensorAngle)/ld);
-    carState.progress(handleAngle, vx, vz, yawrate, velocity/wheelHeight);
+    carState.handleAngle = std::atan(2 * (frontWheelBase+rearWheelBase) * std::sin(sensorAngle)/ld);
     dist += velocity;
+    controller(*this, this->getCarState());
+//    carState.progress(handleAngle, vx, vz, yawrate, velocity/wheelHeight);
 }

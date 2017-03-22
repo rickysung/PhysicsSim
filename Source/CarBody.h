@@ -17,6 +17,7 @@ struct CarState
     float handleAngle;
     Vector location;
     float theta;
+    float yawRate;
     float wheelAngle[4];
     
     Vector getLocation()
@@ -70,13 +71,13 @@ struct CarState
                    wheelTrack,0,wheelBase,1);
         return t;
     }
-    void progress(float ha, float vx, float vz, float yawrate, float wheelVelocity)
+    void progress(float vx, float vz, float yr, float wheelVelocity)
     {
         int i;
-        handleAngle = ha;//std::atan(2 * 2.7f * std::sin(sensorAngle)/ld);
         location.x += vx;
         location.z += vz;
-        theta += yawrate;
+        yawRate = yr;
+        theta += yawRate;
         for(i=0 ; i<4 ; i++)
             wheelAngle[i] += wheelVelocity;
     }
@@ -85,8 +86,9 @@ private:
 class CarBody : public BaseObject
 {
 public:
-    CarBody(Colour c, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheel, float rearWheel);
+    CarBody(Colour c, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheel, float rearWheel, void (*ctrl)(CarBody&, CarState&));
     void progress();
+    float getVelocity() { return velocity; }
     float getWheelHeight() { return wheelHeight; }
     float getFrontWheelBase() { return frontWheelBase; }
     float getRearWheelBase() { return rearWheelBase; }
@@ -118,6 +120,7 @@ private:
     const float rearWheelBase;
     const float frontWheelTrack;
     const float rearWheelTrack;
+    void (*controller)(CarBody&, CarState&);
     float dist = 0;
     float velocity;
     float acceleration;
