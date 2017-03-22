@@ -41,7 +41,9 @@ PhysicsContainer::PhysicsContainer ()
 
     //[Constructor] You can add your own custom stuff here..
     setWantsKeyboardFocus(true);
-    addCarBody(0.31f, 1.14f, 1.56, 0.851f, 0.85f);
+    addCarBody(Colours::red, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
+   // addCarBody(Colours::blue, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
+   // addCarBody(Colours::green, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
     //[/Constructor]
 }
 
@@ -150,21 +152,30 @@ void PhysicsContainer::mouseWheelMove (const MouseEvent& e, const MouseWheelDeta
 bool PhysicsContainer::keyPressed (const KeyPress& key)
 {
     //[UserCode_keyPressed] -- Add your code here...
-
-//    if(key==KeyPress::downKey)
-//    {
-//        carBody->forward(-0.01);
-//        return true;
-//    }
-//    else if(key==KeyPress::upKey)
-//    {
-//        if(!isTimerRunning())
-//        {
-//            startTimer(10);
-//        }
-//        carBody->forward(0.01);
-//        return true;
-//    }
+    int i;
+    CarBody* carBody;
+    if(key==KeyPress::downKey)
+    {
+        for(i=0 ; i<carBodys.size() ; i++)
+        {
+            carBody = carBodys.getUnchecked(i);
+            carBody->forward(-0.01);
+        }
+        return true;
+    }
+    else if(key==KeyPress::upKey)
+    {
+        if(!isTimerRunning())
+        {
+            startTimer(10);
+        }
+        for(i=0 ; i<carBodys.size() ; i++)
+        {
+            carBody = carBodys.getUnchecked(i);
+            carBody->forward(0.01);
+        }
+        return true;
+    }
 //    else if(key==KeyPress::spaceKey)
 //    {
 //        stopTimer();
@@ -187,10 +198,10 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
-void PhysicsContainer::addCarBody(float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheelTrack, float rearWheelTrack)
+void PhysicsContainer::addCarBody(Colour bc, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheelTrack, float rearWheelTrack)
 {
     
-    ScopedPointer<CarBody> carBody = new CarBody(wheelHeight,
+    CarBody* carBody = new CarBody(bc, wheelHeight,
                           frontWheelBase,
                           rearWheelBase,
                           frontWheelTrack,
@@ -200,12 +211,11 @@ void PhysicsContainer::addCarBody(float wheelHeight, float frontWheelBase, float
 void PhysicsContainer::timerCallback()
 {
     int i;
-    ScopedPointer<CarBody> carBody;
+    CarBody* carBody;
     for(i=0 ; i<carBodys.size() ; i++)
     {
         carBody = carBodys.getUnchecked(i);
-        if(carBody->isCheck(7.0f))
-            carRenderer->saveState();
+        carBody->stateCheck(7.0f);
     }
 }
 void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float values[])
@@ -240,27 +250,10 @@ void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, 
         }
     }
 }
-void PhysicsContainer::sensing(CarBody* carBody)
-{
-    int i, n;
-    Array<Vector>& points = carRenderer->getRoadPoints();
-    n = points.size();
-    bool isIntersact = false;
-    for(i=0 ; i<n-1 ; i+=2)
-    {
-        if(!isIntersact)
-        {
-            isIntersact = carBody->getCarState().setSensorLocation(
-                                                                   Line<float>(points[i].x, points[i].z,
-                                                                               points[i+1].x, points[i+1].z));
-        }
-        else
-            break;
-    }
-}
+
 void PhysicsContainer::initialise()
 {
-    carRenderer = new CarRenderer(openGLContext, getWidth(), getHeight());
+    carRenderer = new CarRenderer(openGLContext, carBodys, getWidth(), getHeight());
 }
 void PhysicsContainer::render()
 {
@@ -269,15 +262,14 @@ void PhysicsContainer::render()
     CarBody* carBody;
     Vector p;
     n = carBodys.size();
+    carRenderer->focusOn(0);
     for(i=0 ; i<n ; i++)
     {
-        carBody = carBodys.getUnchecked(i);
-        sensing(carBody);
+        carBody = carBodys[i];
+        carBody->sensing(carRenderer->getRoadPoints());
         carBody->progress();
-        carRenderer->setCarBody(carBody);
-        
-        carRenderer->draw();
     }
+    carRenderer->draw();
     repaint();
 }
 void PhysicsContainer::shutdown()

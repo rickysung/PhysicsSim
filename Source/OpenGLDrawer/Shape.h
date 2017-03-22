@@ -47,7 +47,8 @@ public:
     void draw(OpenGLShaderProgram::Uniform* matAmbi,
               OpenGLShaderProgram::Uniform* matDiff,
               OpenGLShaderProgram::Uniform* matSpec,
-              OpenGLShaderProgram::Uniform* matShin)
+              OpenGLShaderProgram::Uniform* matShin,
+              Colour bc = Colour(0x000000))
     {
         WavefrontObjFile::Vertex amb;
         WavefrontObjFile::Vertex dif;
@@ -62,8 +63,14 @@ public:
             dif = shapeFile.modelObjects.getUnchecked(i)->material.diffuse;
             spc = shapeFile.modelObjects.getUnchecked(i)->material.specular;
             shn = shapeFile.modelObjects.getUnchecked(i)->material.shininess;
-            
-            matAmbi->set(amb.x, amb.y, amb.z);
+            if(strcmp(s, "body_paint")==0)
+            {
+                matAmbi->set(bc.getRed(), bc.getGreen(), bc.getBlue());
+            }
+            else
+            {
+                matAmbi->set(amb.x, amb.y, amb.z);
+            }
             matDiff->set(dif.x, dif.y, dif.z);
             matSpec->set(spc.x, spc.y, spc.z);
             matShin->set(shn);

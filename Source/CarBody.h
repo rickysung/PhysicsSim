@@ -16,33 +16,9 @@ struct CarState
 {
     float handleAngle;
     Vector location;
-    float ld =1.0f, sensorAngle = 0;
     float theta;
     float wheelAngle[4];
-    bool setSensorLocation(Line<float> l)
-    {
-        Vector intersect;
-        Vector s1 = Vector(-std::cos(theta),0,-std::sin(theta));
-        Vector s2 = Vector(std::cos(theta),0,std::sin(theta));
-        Vector left, right, center;
-        center  = location + Vector(-std::sin(theta),0,std::cos(theta)) * 4.0f;
-        left = center + s1*2.5f;
-        right = center + s2*2.5f;
-        s1 = left;
-        s2 = right;
-        if(l.intersects(Line<float>(s1.x, s1.z, s2.x, s2.z)))
-        {
-            Point<float> p = l.getIntersection(Line<float>(s1.x, s1.z, s2.x, s2.z));
-            intersect = Vector(p.x, 0, p.y);
-            sensorAngle = std::atan((intersect-center).length()/(center-location).length());
-            if((intersect-left).length()>(intersect-right).length())
-                sensorAngle = -sensorAngle;
-            ld = (intersect-location).length();
-            //printf("%.2lf %.2lf %.2lf %.2lf %.2lf %.2lf---\n",intersect.x, intersect.z, s1.x, s1.z, s2.x, s2.z);
-            return true;
-        }
-        return false;
-    }
+    
     Vector getLocation()
     {
         return location;
@@ -94,45 +70,49 @@ struct CarState
                    wheelTrack,0,wheelBase,1);
         return t;
     }
-    void progress(float vx, float vz, float wheelVelocity, float yawrate)
+    void progress(float ha, float vx, float vz, float yawrate, float wheelVelocity)
     {
         int i;
-        handleAngle = std::atan(0.4 * std::sin(sensorAngle) * ld);
-        //handleAngle = std::atan(2 * 2.7f * std::sin(sensorAngle)/ld);
-        for(i=0 ; i<4 ; i++)
-            wheelAngle[i] += wheelVelocity;
+        handleAngle = ha;//std::atan(2 * 2.7f * std::sin(sensorAngle)/ld);
         location.x += vx;
         location.z += vz;
         theta += yawrate;
+        for(i=0 ; i<4 ; i++)
+            wheelAngle[i] += wheelVelocity;
     }
 private:
 };
 class CarBody : public BaseObject
 {
 public:
-    CarBody(float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheel, float rearWheel);
+    CarBody(Colour c, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheel, float rearWheel);
     void progress();
     float getWheelHeight() { return wheelHeight; }
     float getFrontWheelBase() { return frontWheelBase; }
     float getRearWheelBase() { return rearWheelBase; }
     float getFrontWheelTrack() { return frontWheelTrack; }
     float getRearWheelTrack() { return rearWheelTrack; }
-//    Matrix getLocationMatrix();
-//    Matrix getInverseLocationMatrix();
-//    Matrix getWheelMatrix(TIRE_INDEX idx);
-    bool isCheck(float criterion)
+    bool stateCheck(float criterion)
     {
-        if(dist>criterion)
+        if(dist>criterion && max_save_state>0)
         {
+            saveState();
             dist = 0;
             return true;
         }
         return false;
     }
+    Colour getBodyColour() { return bodyColour; }
+    Array<CarState> getStateHistory(){ return stateHistory; }
     CarState& getCarState();
     void forward(float val);
     void steer(float ang);
+    void sensing(Array<Vector>&);
 private:
+    Colour bodyColour;
+    Array<CarState> stateHistory;
+    void saveState();
+    bool setSensorLocation(Line<float>);
     const float wheelHeight;
     const float frontWheelBase;
     const float rearWheelBase;
@@ -142,9 +122,12 @@ private:
     float velocity;
     float acceleration;
     
+    float sensorAngle;
+    float ld;
     float yawrate;
     float yawaccel;
-    
+    int max_save_state;
+    int state_idx;
     CarState carState;
 };
 

@@ -17,17 +17,17 @@ class CarRenderer : public SimRenderer
 {
 public:
     CarRenderer(OpenGLContext& glContext,
+                OwnedArray<CarBody>& cb,
                       int screenWidth,
                    int screenHeight);
     void draw() override;
+    void focusOn(int idx) { focusedCarBody = carBodys[idx]; }
     void BindTexture(GLuint textureID)
     {
         inputTexture = textureID;
     }
-    void saveState();
     float getTimer() { return timer; }
     
-    void setCarBody(CarBody*);
     Matrix getTransformMatrix() override;
     Matrix getInverseTransformMatrix() override;
     Matrix getViewMatrix() override;
@@ -39,8 +39,8 @@ public:
     Array<Vector>& getRoadPoints() {return roadShape.getRoadPoints();}
 private:
     void paintGL();
-    Matrix getWheelMatrix(CarState, TIRE_INDEX);
-    void drawCar(CarState);
+    Matrix getWheelMatrix(CarBody*, CarState, TIRE_INDEX);
+    void drawCar(CarBody*, CarState);
     float timer = 0;
     GLuint inputTexture;
     virtual const char* getVertexShader() override;
@@ -51,10 +51,8 @@ private:
     ObjShape carShape;
     ObjShape wheelShape;
     RoadShape roadShape;
-    ScopedPointer<CarBody> carBody;
-    Array<CarState> carStates;
-    int max_save_state;
-    int state_idx;
+    CarBody* focusedCarBody;
+    OwnedArray<CarBody>& carBodys;
     ScopedPointer<OpenGLShaderProgram::Uniform> textureID;
 };
 

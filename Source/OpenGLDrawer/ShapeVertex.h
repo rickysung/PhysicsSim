@@ -1188,8 +1188,9 @@ struct RoadVertex : ShapeVertex
         dir = buildCurveRoad(origin,dir,7,M_PI,true);
         dir = buildCurveRoad(origin,dir,7,M_PI_4,true);
         dir = buildCurveRoad(origin,dir,7,M_PI,false);
-        dir = buildStraightRoad(origin,dir,55.0f);
+        dir = buildStraightRoad(origin,dir,54.0f);
         dir = buildCurveRoad(origin,dir,7,M_PI_2,false);
+        dir = buildStraightRoad(origin,dir,5.7f);
         context.extensions.glGenVertexArrays(1, &shapeVAO);
         context.extensions.glGenBuffers (1, &shapeVBO);
         context.extensions.glGenBuffers (1, &shapeEBO);

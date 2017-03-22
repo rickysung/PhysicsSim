@@ -47,7 +47,7 @@ public:
 
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
-    void addCarBody(float, float, float, float, float);
+    void addCarBody(Colour, float, float, float, float, float);
     void initialise() override;
     void render() override;
     void shutdown() override;
@@ -65,7 +65,7 @@ public:
 
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
-    void sensing(CarBody*);
+    //
     void drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float* v);
     OwnedArray<CarBody> carBodys;
     ScopedPointer<CarBody> focusedCar;
