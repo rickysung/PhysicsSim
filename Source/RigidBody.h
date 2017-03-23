@@ -11,14 +11,6 @@
 #ifndef RIGIDBODY_H_INCLUDED
 #define RIGIDBODY_H_INCLUDED
 
-#include "BaseObject.h"
-class RigidBody : public BaseObject
-{
-public:
-    RigidBody(int width, int height);
-public:
-};
-
 
 
 #endif  // RIGIDBODY_H_INCLUDED

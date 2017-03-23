@@ -21,36 +21,7 @@ enum class TIRE_INDEX{
     REAR_LEFT,
     REAR_RIGHT
 };
-class MechanicalPoint
-{
-};
-class BodyPoint
-{
-public:
-    BodyPoint(float, float, float);
-    Vector bodyPoint;
-};
-class ForcePoint : public MechanicalPoint
-{
-    
-};
-class ImpulseEmitter : public ForcePoint
-{
-    
-};
-class ForceEmitter : public ForcePoint
-{
-    
-};
-class BaseObject
-{
-public:
-    BaseObject();
-    void setPosition(Vector p);
-    virtual ~BaseObject(){}
-protected:
-    Vector originPoint;
-};
+
 
 
 

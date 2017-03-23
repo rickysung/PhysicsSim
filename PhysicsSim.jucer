@@ -46,6 +46,10 @@
         <FILE id="c9TJH5" name="BaseObject.h" compile="0" resource="0" file="Source/BaseObject.h"/>
         <FILE id="sBEBAS" name="CarBody.cpp" compile="1" resource="0" file="Source/CarBody.cpp"/>
         <FILE id="SwhIRi" name="CarBody.h" compile="0" resource="0" file="Source/CarBody.h"/>
+        <FILE id="Km51kr" name="HandleAlgorithm.cpp" compile="1" resource="0"
+              file="Source/HandleAlgorithm.cpp"/>
+        <FILE id="o7Ho42" name="HandleAlgorithm.h" compile="0" resource="0"
+              file="Source/HandleAlgorithm.h"/>
         <FILE id="coLxL6" name="RigidBody.cpp" compile="1" resource="0" file="Source/RigidBody.cpp"/>
         <FILE id="ZY8PDz" name="RigidBody.h" compile="0" resource="0" file="Source/RigidBody.h"/>
       </GROUP>

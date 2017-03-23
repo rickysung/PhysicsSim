@@ -62,9 +62,10 @@ PhysicsContainer::PhysicsContainer ()
 
     //[Constructor] You can add your own custom stuff here..
     setWantsKeyboardFocus(true);
-    addCarBody(Colours::white,
-               0.31f, 1.14f, 1.56f, 0.851f, 0.85f, kinematicMovement);
-   // addCarBody(Colours::blue, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
+    addCarBody(kinematicMovement, new purePursuitMethod(1.0f), Colours::white,
+               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
+    addCarBody(kinematicMovement, new purePursuitMethod(1.5f), Colours::blue,
+               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
    // addCarBody(Colours::green, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
     //[/Constructor]
 }
@@ -203,16 +204,24 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 //        stopTimer();
 //        return true;
 //    }
-//    else if(key==KeyPress::leftKey)
-//    {
-//        carBody->steer(0.05);
-//        return true;
-//    }
-//    else if(key==KeyPress::rightKey)
-//    {
-//        carBody->steer(-0.05);
-//        return true;
-//    }
+    else if(key==KeyPress::leftKey)
+    {
+        focusedCarIndex--;
+        if(focusedCarIndex<0)
+        {
+            focusedCarIndex = carBodys.size()-1;
+        }
+        return true;
+    }
+    else if(key==KeyPress::rightKey)
+    {
+        focusedCarIndex++;
+        if(focusedCarIndex>=carBodys.size())
+        {
+            focusedCarIndex = 0;
+        }
+        return true;
+    }
     return false;  // Return true if your handler uses this key event, or false to allow it to be passed-on.
     //[/UserCode_keyPressed]
 }
@@ -220,14 +229,14 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
-void PhysicsContainer::addCarBody(Colour bc, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheelTrack, float rearWheelTrack, void (*ctrl)(CarBody&, CarState&))
+void PhysicsContainer::addCarBody(void (*ctrl)(CarBody&, CarState&), HandleAlgorithm* ha, Colour bc, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheelTrack, float rearWheelTrack)
 {
     
-    CarBody* carBody = new CarBody(bc, wheelHeight,
+    CarBody* carBody = new CarBody(ctrl, ha, bc, wheelHeight,
                           frontWheelBase,
                           rearWheelBase,
                           frontWheelTrack,
-                                   rearWheelTrack, ctrl);
+                                   rearWheelTrack);
     carBodys.add(carBody);
 }
 void PhysicsContainer::timerCallback()
@@ -284,7 +293,7 @@ void PhysicsContainer::render()
     CarBody* carBody;
     Vector p;
     n = carBodys.size();
-    carRenderer->focusOn(0);
+    carRenderer->focusOn(focusedCarIndex);
     for(i=0 ; i<n ; i++)
     {
         carBody = carBodys[i];

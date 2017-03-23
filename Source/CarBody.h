@@ -10,8 +10,8 @@
 
 #ifndef CARBODY_H_INCLUDED
 #define CARBODY_H_INCLUDED
-
-#include "RigidBody.h"
+#include "BaseObject.h"
+#include "HandleAlgorithm.h"
 struct CarState
 {
     float handleAngle;
@@ -83,10 +83,11 @@ struct CarState
     }
 private:
 };
-class CarBody : public BaseObject
+
+class CarBody
 {
 public:
-    CarBody(Colour c, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheel, float rearWheel, void (*ctrl)(CarBody&, CarState&));
+    CarBody(void (*cm)(CarBody&, CarState&), HandleAlgorithm* ha, Colour carBodyColour, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheel, float rearWheel);
     void progress();
     float getVelocity() { return velocity; }
     float getWheelHeight() { return wheelHeight; }
@@ -111,10 +112,10 @@ public:
     void steer(float ang);
     void sensing(Array<Vector>&);
 private:
+    ScopedPointer<HandleAlgorithm> handleAlgorithm;
     Colour bodyColour;
     Array<CarState> stateHistory;
     void saveState();
-    bool setSensorLocation(Line<float>);
     const float wheelHeight;
     const float frontWheelBase;
     const float rearWheelBase;
@@ -123,16 +124,78 @@ private:
     void (*controller)(CarBody&, CarState&);
     float dist = 0;
     float velocity;
-    float acceleration;
-    
-    float sensorAngle;
-    float ld;
-    float yawrate;
-    float yawaccel;
     int max_save_state;
     int state_idx;
     CarState carState;
 };
 
+class purePursuitMethod : public HandleAlgorithm
+{
+public:
+    purePursuitMethod(float p)
+    {
+        pGain = p;
+    }
+    void setCarBody(CarBody* cb) override
+    {
+        carBody = cb;
+        ld = carBody->getRearWheelBase() + carBody->getFrontWheelBase();
+        sensorAngle = 0;
+    }
+private:
+    bool setSensorLocation(Line<float> l)
+    {
+        if(carBody==nullptr)
+            return false;
+        CarState& carState = carBody->getCarState();
+        Vector intersect;
+        Vector s1 = Vector(-std::cos(carState.theta), 0, -std::sin(carState.theta));
+        Vector s2 = Vector( std::cos(carState.theta), 0,  std::sin(carState.theta));
+        Vector left, right, center;
+        center  = carState.location + Vector(-std::sin(carState.theta),0,std::cos(carState.theta)) * 4.5f;
+        left = center + s1*2.5f;
+        right = center + s2*2.5f;
+        s1 = left;
+        s2 = right;
+        if(l.intersects(Line<float>(s1.x, s1.z, s2.x, s2.z)))
+        {
+            Point<float> p = l.getIntersection(Line<float>(s1.x, s1.z, s2.x, s2.z));
+            intersect = Vector(p.x, 0, p.y);
+            sensorAngle = std::atan((intersect-center).length()/(center-carState.location).length());
+            if((intersect-left).length()>(intersect-right).length())
+                sensorAngle = -sensorAngle;
+            ld = (intersect-carState.location).length();
+            return true;
+        }
+        return false;
+    }
+    void handleProcess(Array<Vector>& points) override
+    {
+        if(carBody==nullptr)
+            return;
+        float carLength = carBody->getFrontWheelBase()+carBody->getRearWheelBase();
+        CarState& carState = carBody->getCarState();
+        int i, n;
+        n = points.size();
+        bool isIntersact = false;
+        for(i=0 ; i<n-1 ; i+=2)
+        {
+            if(!isIntersact)
+            {
+                isIntersact
+                = setSensorLocation(Line<float>(points[i].x,
+                                                points[i].z,
+                                                points[i+1].x,
+                                                points[i+1].z));
+            }
+            else
+                break;
+        }
+        carState.handleAngle = std::atan(2 * pGain * carLength * std::sin(sensorAngle)/ld);
+    }
+    float pGain = 1.0f;
+    float ld = 1.0f;
+    float sensorAngle = 0;
+};
 
 #endif  // CARBODY_H_INCLUDED

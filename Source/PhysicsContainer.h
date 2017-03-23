@@ -47,7 +47,7 @@ public:
 
     //==============================================================================
     //[UserMethods]     -- You can add your own custom methods in this section.
-    void addCarBody(Colour, float, float, float, float, float, void (*)(CarBody&, CarState&));
+    void addCarBody(void (*)(CarBody&, CarState&), HandleAlgorithm*, Colour, float, float, float, float, float);
     void initialise() override;
     void render() override;
     void shutdown() override;
@@ -70,6 +70,7 @@ private:
     OwnedArray<CarBody> carBodys;
     CarBody* focusedCar;
     ScopedPointer<CarRenderer> carRenderer;
+    int focusedCarIndex = 0;
     float startAzi;
     float startElv;
     int lastIndex;
