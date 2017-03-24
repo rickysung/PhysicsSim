@@ -128,7 +128,73 @@ private:
     int state_idx;
     CarState carState;
 };
-
+class centerPursuitMethod : public HandleAlgorithm
+{
+public:
+    centerPursuitMethod(float p) : pGain(p){}
+    void setCarBody(CarBody* cb) override
+    {
+        carBody = cb;
+        sensorDistance = 5.0f;
+        sensorWidth = 2.5f;
+        centerLocation = sensorWidth;
+    }
+private:
+    void getIntersectPoints(Line<float> l, Array<float>& points)
+    {
+        CarState& carState = carBody->getCarState();
+        Vector s1 = Vector(-std::cos(carState.theta), 0, -std::sin(carState.theta));
+        Vector s2 = Vector( std::cos(carState.theta), 0,  std::sin(carState.theta));
+        Vector left, right, center, intersect;
+        center  = carState.location + Vector(-std::sin(carState.theta),0,std::cos(carState.theta)) * sensorDistance;
+        left = center + s1*sensorWidth;
+        right = center + s2*sensorWidth;
+        float dist;
+        Line<float> sensorLine = Line<float>(left.x, left.z, right.x, right.z);
+        if(l.intersects(sensorLine))
+        {
+            Point<float> p = l.getIntersection(sensorLine);
+            intersect = Vector(p.x, 0, p.y);
+            dist = (intersect-left).length();
+            points.add(dist);
+            if(dist>centerLocation)
+                return;
+        }
+    }
+    void handleProcess(Array<Vector>& points) override
+    {
+        int i, n;
+        float left = 0, right = 2*sensorWidth;
+        Array<float> crossPoints;
+        if(carBody==nullptr)
+            return;
+        CarState& carState = carBody->getCarState();
+        n = points.size();
+        for(i=0 ; i<n-1 ; i+=2)
+        {
+            getIntersectPoints(Line<float>(points[i].x,
+                                           points[i].z,
+                                           points[i+1].x,
+                                           points[i+1].z), crossPoints);
+        }
+        n = crossPoints.size();
+        for(i=0 ; i<n ; i++)
+        {
+            if(crossPoints[i]<centerLocation)
+            {
+                left = crossPoints[i];
+            }
+            else
+                right = crossPoints[i];
+        }
+        centerLocation = (left + right)/2;
+        carState.handleAngle = pGain * (sensorWidth - centerLocation);
+    }
+    float centerLocation;
+    float sensorDistance;
+    float sensorWidth;
+    float pGain;
+};
 class purePursuitMethod : public HandleAlgorithm
 {
 public:
@@ -141,20 +207,20 @@ public:
         carBody = cb;
         ld = carBody->getRearWheelBase() + carBody->getFrontWheelBase();
         sensorAngle = 0;
+        sensorDistance = 4.5f;
+        sensorWidth = 2.5f;
     }
 private:
     bool setSensorLocation(Line<float> l)
     {
-        if(carBody==nullptr)
-            return false;
         CarState& carState = carBody->getCarState();
         Vector intersect;
         Vector s1 = Vector(-std::cos(carState.theta), 0, -std::sin(carState.theta));
         Vector s2 = Vector( std::cos(carState.theta), 0,  std::sin(carState.theta));
         Vector left, right, center;
-        center  = carState.location + Vector(-std::sin(carState.theta),0,std::cos(carState.theta)) * 4.5f;
-        left = center + s1*2.5f;
-        right = center + s2*2.5f;
+        center  = carState.location + Vector(-std::sin(carState.theta),0,std::cos(carState.theta)) * sensorDistance;
+        left = center + s1*sensorWidth;
+        right = center + s2*sensorWidth;
         s1 = left;
         s2 = right;
         if(l.intersects(Line<float>(s1.x, s1.z, s2.x, s2.z)))
@@ -182,8 +248,7 @@ private:
         {
             if(!isIntersact)
             {
-                isIntersact
-                = setSensorLocation(Line<float>(points[i].x,
+                isIntersact = setSensorLocation(Line<float>(points[i].x,
                                                 points[i].z,
                                                 points[i+1].x,
                                                 points[i+1].z));
@@ -196,6 +261,8 @@ private:
     float pGain = 1.0f;
     float ld = 1.0f;
     float sensorAngle = 0;
+    float sensorDistance = 0;
+    float sensorWidth = 0;
 };
 
 #endif  // CARBODY_H_INCLUDED
