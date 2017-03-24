@@ -14,11 +14,11 @@
 #include "HandleAlgorithm.h"
 struct CarState
 {
-    float handleAngle;
+    float handleAngle = 0;
     Vector location;
-    float theta;
-    float yawRate;
-    float wheelAngle[4];
+    float theta = 0;
+    float yawRate = 0;
+    float wheelAngle[4] = {0,};
     
     Vector getLocation()
     {
