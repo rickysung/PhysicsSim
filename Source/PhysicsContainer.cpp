@@ -62,9 +62,11 @@ PhysicsContainer::PhysicsContainer ()
 
     //[Constructor] You can add your own custom stuff here..
     setWantsKeyboardFocus(true);
-    addCarBody(kinematicMovement, new purePursuitMethod(1.0f), Colours::white,
+    addCarBody(kinematicMovement, new purePursuitMethod(1.0f), Colours::red,
                0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
-    addCarBody(kinematicMovement, new purePursuitMethod(1.5f), Colours::blue,
+    addCarBody(kinematicMovement, new centerPursuitMethod(1.0f), Colours::blue,
+               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
+    addCarBody(kinematicMovement, new centerPursuitMethod(0.8f), Colours::gold,
                0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
    // addCarBody(Colours::green, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
     //[/Constructor]

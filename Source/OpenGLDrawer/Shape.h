@@ -65,13 +65,14 @@ public:
             shn = shapeFile.modelObjects.getUnchecked(i)->material.shininess;
             if(strcmp(s, "body_paint")==0)
             {
-                matAmbi->set(bc.getRed(), bc.getGreen(), bc.getBlue());
+                matDiff->set(bc.getFloatRed(), bc.getFloatGreen(), bc.getFloatBlue());
             }
             else
             {
-                matAmbi->set(amb.x, amb.y, amb.z);
+                matDiff->set(dif.x, dif.y, dif.z);
             }
-            matDiff->set(dif.x, dif.y, dif.z);
+            matAmbi->set(amb.x, amb.y, amb.z);
+//            matDiff->set(dif.x, dif.y, dif.z);
             matSpec->set(spc.x, spc.y, spc.z);
             matShin->set(shn);
             context.extensions.glBindVertexArray(VertexArrays.getUnchecked(i)->shapeVAO);

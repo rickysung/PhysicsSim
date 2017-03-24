@@ -1200,7 +1200,7 @@ struct RoadVertex : ShapeVertex
         context.extensions.glBindVertexArray(0);
         vertexSize = indecies.size();
     }
-    float width = 3.0f;
+    float width = 2.0f;
     Array<Vector> pointArray;
 };
 struct FloorVertex : ShapeVertex

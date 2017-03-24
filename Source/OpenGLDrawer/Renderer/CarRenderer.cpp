@@ -78,7 +78,6 @@ const char* CarRenderer::getFragmentShader()
     "\n"
     "struct Light {\n"
     "    vec3 position;\n"
-    "\n"
     "    vec3 ambient;\n"
     "    vec3 diffuse;\n"
     "    vec3 specular;\n"
@@ -109,7 +108,7 @@ const char* CarRenderer::getFragmentShader()
     "   {\n"
     "       if(isMaterialMode>=1)\n"
     "       {\n"
-    "           vec3 viewPos = vec3(0.0, 0.0, 1.0);\n"
+    "           vec3 viewPos = vec3(1.0, 0.0, 0.0);\n"
     
     // Ambient
     "           vec3 ambient = light.ambient * material.ambient;\n"
@@ -123,7 +122,7 @@ const char* CarRenderer::getFragmentShader()
     // Specular
     "           vec3 viewDir = normalize(viewPos - FragPos);\n"
     "           vec3 reflectDir = reflect(-lightDir, norm);\n"
-    "           float spec = pow(max(dot(viewDir, reflectDir), -dot(viewDir, reflectDir)), material.shininess);\n"
+    "           float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
     "           vec3 specular = light.specular * (spec * material.specular);\n"
     "\n"
     "           vec3 result = ambient + diffuse + specular;\n"
