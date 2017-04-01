@@ -143,7 +143,7 @@ const char* CarRenderer::getFragmentShader()
 }
 Matrix CarRenderer::getViewMatrix()
 {
-    return getViewMatrix(camYaw, camPitch, camAzimuth + focusedCarBody->getCarState().theta, camElevation, camDistance);
+    return getViewMatrix(camYaw, camPitch, camAzimuth, camElevation, camDistance);
 }
 Matrix CarRenderer::getViewMatrix(float camy, float camp, float cama, float came, float camd)
 {
@@ -296,7 +296,11 @@ Matrix CarRenderer::getWheelMatrix(CarBody* carBody, CarState state, TIRE_INDEX 
 }
 void CarRenderer::drawCar(CarBody* carBody, CarState state)
 {
-    Matrix trs = state.getLocationMatrix();
+    Matrix offset(1, 0, 0, 0,
+                  0, 1, 0, 0,
+                  0, 0, 1, 0,
+                  offsetX, 0, offsetZ, 1);
+    Matrix trs = state.getLocationMatrix() * offset;
     Matrix rearRightWheel = getWheelMatrix(carBody, state, TIRE_INDEX::REAR_RIGHT);
     Matrix rearLeftWheel = getWheelMatrix(carBody, state, TIRE_INDEX::REAR_LEFT);
     Matrix frontRightWheel = getWheelMatrix(carBody, state, TIRE_INDEX::FRONT_RIGHT);
@@ -328,7 +332,7 @@ void CarRenderer::paintGL()
     Matrix u(1, 0, 0, 0,
              0, 1, 0, 0,
              0, 0, 1, 0,
-             0, 0, 0, 1);
+             offsetX, 0, offsetZ, 1);
     modelMatrix->setMatrix4(u.mat, 1, false);
     modelScale->set(1.0f);
     bodyColour->set(0.0f,0.0f,1.0f,1.0f);
@@ -344,20 +348,16 @@ void CarRenderer::paintGL()
         carBody = carBodys[i];
         drawCar(carBody, carBody->getCarState());
         m = carBody->getStateHistory().size();
-        isMaterialMode->set(2);
-        for(j=0 ; j<m ; j++)
+        if(isShowTrajectory)
         {
-            drawCar(carBody, carBody->getStateHistory()[j]);
+            isMaterialMode->set(2);
+            for(j=0 ; j<m ; j++)
+            {
+                drawCar(carBody, carBody->getStateHistory()[j]);
+            }
+            isMaterialMode->set(1);
         }
-        isMaterialMode->set(1);
     }
-//    n = carStates.size();
-//    isMaterialMode->set(2);
-//    for(i=0 ; i<n ; i++)
-//    {
-//        drawCar(carStates[i]);
-//    }
-//    
     isMaterialMode->set(0);
 }
 void CarRenderer::draw()

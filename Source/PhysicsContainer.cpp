@@ -42,7 +42,7 @@ void kinematicMovement(CarBody& carBody, CarState& carState)
     vz = velocity * std::cos(t) - rearWheelBase * yawrate * std::sin(t+d);
     vx *= dt;
     vz *= dt;
-    carState.progress(vx, vz, yawrate*dt, velocity/wheelHeight*dt);
+    carState.progress(vx, vz, yawrate, velocity/wheelHeight*dt);
 }
 void dynamicMovement(CarBody& carBody, CarState& carState)
 {
@@ -59,14 +59,20 @@ void dynamicMovement(CarBody& carBody, CarState& carState)
     float cf = 80000, cr = 80000;
     float dvy, dr;
     float t, gx, gz;
+    bool slipAngleFlag = false;
     t = carState.theta;
     if(vx!=0)
     {
+        slipAngleFlag = std::abs(d-std::atan((vy+lf*r)/vx))*180/M_PI>14;
+        if(slipAngleFlag)
+        {
+            printf("d : %.2lf a : %.2lf vx : %.2lf r : %.2lf\n", d*180/M_PI, std::atan((vy+lf*r)/vx)*180/M_PI, vx, r);
+        }
         dvy = -2*(cf+cr)/(m*vx)*vy + (2*(lr*cr-lf*cf)/(m*vx)-vx)*r + 2*cf*d/m;
         dr = 2*(lr*cr-lf*cf)/(iz*vx)*vy - 2*(lf*lf*cf+lr*lr*cr)*r/(iz*vx) + 2*lf*cf*d/iz;
         carBody.setLateralVelocity(vy + dvy*dt);
-        gx = -vx * std::sin(t) - lr * r * std::cos(t+d) + dvy * std::sin(t+d) * dt*0.5f;
-        gz =  vx * std::cos(t) - lr * r * std::sin(t+d) + dvy * std::cos(t+d) * dt*0.5f;
+        gx = -vx * std::sin(t) - lr * r * std::cos(t+d) + dvy * std::cos(t+d) * dt*0.5f;
+        gz =  vx * std::cos(t) - lr * r * std::sin(t+d) + dvy * std::sin(t+d) * dt*0.5f;
         gx *= dt;
         gz *= dt;
         carState.progress(gx, gz, (r + dr*dt*0.5f), vx/wheelHeight*dt);
@@ -91,10 +97,10 @@ PhysicsContainer::PhysicsContainer ()
     //[Constructor] You can add your own custom stuff here..
     setWantsKeyboardFocus(true);
     handleMethod = new ManualMethod();
-//    addCarBody(kinematicMovement, new centerPursuitMethod(0.8f), Colours::crimson,
-//               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
-//    addCarBody(kinematicMovement, new purePursuitMethod(1.0f), Colours::burlywood,
-//               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
+    addCarBody(kinematicMovement, new centerPursuitMethod(0.8f), Colours::crimson,
+               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
+    addCarBody(kinematicMovement, new purePursuitMethod(1.0f), Colours::burlywood,
+               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
     addCarBody(dynamicMovement, new centerPursuitMethod(0.8f), Colours::coral,
                0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
    // addCarBody(Colours::green, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
@@ -191,6 +197,7 @@ void PhysicsContainer::mouseDrag (const MouseEvent& e)
         carRenderer->setCameraYaw(startYaw + mx);
         carRenderer->setCameraPitch(startPch + my);
     }
+    repaint();
     //[/UserCode_mouseDrag]
 }
 
@@ -200,6 +207,7 @@ void PhysicsContainer::mouseWheelMove (const MouseEvent& e, const MouseWheelDeta
     float dis = carRenderer->getCameraDistance();
     float diff = -wheel.deltaY;
     carRenderer->setCameraDistance(dis + diff);
+    repaint();
     //[/UserCode_mouseWheelMove]
 }
 
@@ -230,11 +238,23 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
         }
         return true;
     }
-//    else if(key==KeyPress::spaceKey)
-//    {
-//        stopTimer();
-//        return true;
-//    }
+    else if(key==KeyPress::spaceKey)
+    {
+        if(isTimerRunning())
+        {
+            stopTimer();
+            carRenderer->setTrajectoryMode(true);
+            repaint();
+        }
+        else
+        {
+            startTimer(10);
+            carRenderer->setTrajectoryMode(false);
+        }
+        carRenderer->setOffsetX(0);
+        carRenderer->setOffsetZ(0);
+        return true;
+    }
     else if(key.getKeyCode()=='1')
     {
         focusedCarIndex--;
@@ -252,6 +272,42 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
             focusedCarIndex = 0;
         }
         return true;
+    }
+    else if(key.getKeyCode() == 'S')
+    {
+        float x, z;
+        x = carRenderer->getOffsetX();
+        z = carRenderer->getOffsetZ();
+        carRenderer->setOffsetX(x);
+        carRenderer->setOffsetZ(z+0.5);
+        repaint();
+    }
+    else if(key.getKeyCode() == 'W')
+    {
+        float x, z;
+        x = carRenderer->getOffsetX();
+        z = carRenderer->getOffsetZ();
+        carRenderer->setOffsetX(x);
+        carRenderer->setOffsetZ(z-0.5);
+        repaint();
+    }
+    else if(key.getKeyCode() == 'D')
+    {
+        float x, z;
+        x = carRenderer->getOffsetX();
+        z = carRenderer->getOffsetZ();
+        carRenderer->setOffsetX(x-0.5);
+        carRenderer->setOffsetZ(z);
+        repaint();
+    }
+    else if(key.getKeyCode() == 'A')
+    {
+        float x, z;
+        x = carRenderer->getOffsetX();
+        z = carRenderer->getOffsetZ();
+        carRenderer->setOffsetX(x+0.5);
+        carRenderer->setOffsetZ(z);
+        repaint();
     }
     else if(key==KeyPress::leftKey)
     {
@@ -287,6 +343,7 @@ void PhysicsContainer::timerCallback()
         carBody = carBodys.getUnchecked(i);
         carBody->stateCheck(7.0f);
     }
+    repaint();
 }
 void PhysicsContainer::drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float values[])
 {
@@ -333,14 +390,16 @@ void PhysicsContainer::render()
     Vector p;
     n = carBodys.size();
     carRenderer->focusOn(focusedCarIndex);
-    for(i=0 ; i<n ; i++)
+    if(!carRenderer->getTrajectoryMode())
     {
-        carBody = carBodys[i];
-        carBody->sensing(carRenderer->getRoadPoints());
-        carBody->progress();
+        for(i=0 ; i<n ; i++)
+        {
+            carBody = carBodys[i];
+            carBody->sensing(carRenderer->getRoadPoints());
+            carBody->progress();
+        }
     }
     carRenderer->draw();
-    repaint();
 }
 void PhysicsContainer::shutdown()
 {

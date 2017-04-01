@@ -28,6 +28,7 @@ public:
     controllerShape(glContext),
     labelShape(glContext)
     {
+        glContext.setContinuousRepainting(false);
         genFrameBuffer();
     }
     void initializeUniformVariables()

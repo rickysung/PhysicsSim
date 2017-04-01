@@ -26,8 +26,13 @@ public:
     {
         inputTexture = textureID;
     }
+    float getOffsetX() { return offsetX; }
+    float getOffsetZ() { return offsetZ; }
+    void setOffsetX(float v) { offsetX = v; }
+    void setOffsetZ(float v) { offsetZ = v; }
     float getTimer() { return timer; }
-    
+    bool getTrajectoryMode() { return isShowTrajectory; }
+    void setTrajectoryMode(bool v) { isShowTrajectory = v; }
     Matrix getTransformMatrix() override;
     Matrix getInverseTransformMatrix() override;
     Matrix getViewMatrix() override;
@@ -38,6 +43,9 @@ public:
     Matrix getInverseViewMatrix() override;
     Array<Vector>& getRoadPoints() {return roadShape.getRoadPoints();}
 private:
+    float offsetX;
+    float offsetZ;
+    bool isShowTrajectory = false;
     void paintGL();
     Matrix getWheelMatrix(CarBody*, CarState, TIRE_INDEX);
     void drawCar(CarBody*, CarState);

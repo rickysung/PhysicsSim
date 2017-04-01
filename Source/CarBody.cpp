@@ -20,7 +20,7 @@ CarBody::CarBody(void (*ctlr)(CarBody&, CarState&), HandleAlgorithm* ha, Colour 
     velocity = 0;
     lateralVelocity = 0;
     state_idx = 0;
-    max_save_state = 10;
+    max_save_state = 20;
 }
 void CarBody::sensing(Array<Vector>& points)
 {
