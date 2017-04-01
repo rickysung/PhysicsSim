@@ -11,9 +11,17 @@
       <GROUP id="{EE8451D7-11E1-F040-F7B8-D110286DF3D4}" name="Resources">
         <FILE id="QWFJGC" name="avent.mtl" compile="0" resource="1" file="Source/Resources/avent.mtl"/>
         <FILE id="JsWpAy" name="avent.obj" compile="0" resource="1" file="Source/Resources/avent.obj"/>
+        <FILE id="RdNLlq" name="avent_lowpoly.mtl" compile="0" resource="1"
+              file="Source/Resources/avent_lowpoly.mtl"/>
+        <FILE id="FSfnSQ" name="avent_lowpoly.obj" compile="0" resource="1"
+              file="Source/Resources/avent_lowpoly.obj"/>
         <FILE id="OVlmPh" name="avent2.mtl" compile="0" resource="1" file="Source/Resources/avent2.mtl"/>
         <FILE id="GwawZo" name="aventWheel.mtl" compile="0" resource="1" file="Source/Resources/aventWheel.mtl"/>
         <FILE id="ysmpcT" name="aventWheel.obj" compile="0" resource="1" file="Source/Resources/aventWheel.obj"/>
+        <FILE id="auN62g" name="aventWheel_lowpoly.mtl" compile="0" resource="1"
+              file="Source/Resources/aventWheel_lowpoly.mtl"/>
+        <FILE id="jVsysf" name="aventWheel_lowpoly.obj" compile="0" resource="1"
+              file="Source/Resources/aventWheel_lowpoly.obj"/>
       </GROUP>
       <GROUP id="{DB34089F-719C-1377-300E-276907183D31}" name="OpenGLDrawer">
         <GROUP id="{0EF6CB2B-0FA8-FBC7-0606-71EBE867ED3F}" name="Renderer">

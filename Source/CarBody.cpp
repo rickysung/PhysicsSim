@@ -18,8 +18,9 @@ CarBody::CarBody(void (*ctlr)(CarBody&, CarState&), HandleAlgorithm* ha, Colour 
     }
     carState.location = Vector(0,wheelHeight,0);
     velocity = 0;
+    lateralVelocity = 0;
     state_idx = 0;
-    max_save_state = 0;
+    max_save_state = 10;
 }
 void CarBody::sensing(Array<Vector>& points)
 {
@@ -53,6 +54,6 @@ void CarBody::steer(float val)
 }
 void CarBody::progress()
 {
-    dist += velocity;
+    dist += velocity*0.01f;
     controller(*this, this->getCarState());
 }

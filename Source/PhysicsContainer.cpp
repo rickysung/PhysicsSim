@@ -26,6 +26,7 @@
 //[MiscUserDefs] You can add your own user definitions and misc code here...
 void kinematicMovement(CarBody& carBody, CarState& carState)
 {
+    float dt = 0.01f;
     float rearWheelBase = carBody.getRearWheelBase();
     float frontWheelBase = carBody.getFrontWheelBase();
     float wheelHeight = carBody.getWheelHeight();
@@ -39,12 +40,39 @@ void kinematicMovement(CarBody& carBody, CarState& carState)
     yawrate = radius==0?0:(velocity/radius);
     vx = -velocity * std::sin(t) - rearWheelBase * yawrate * std::cos(t+d);
     vz = velocity * std::cos(t) - rearWheelBase * yawrate * std::sin(t+d);
-    carState.progress(vx, vz, yawrate, velocity/wheelHeight);
+    vx *= dt;
+    vz *= dt;
+    carState.progress(vx, vz, yawrate*dt, velocity/wheelHeight*dt);
 }
 void dynamicMovement(CarBody& carBody, CarState& carState)
 {
-    
+    float dt = 0.01f;
+    float lr = carBody.getRearWheelBase();
+    float lf = carBody.getFrontWheelBase();
+    float wheelHeight = carBody.getWheelHeight();
+    float vx = carBody.getVelocity();
+    float r = carState.yawRate;
+    float vy = carBody.getLateralVelocity();
+    float d = carState.handleAngle;
+    float m= 1573;
+    float iz = 2873;
+    float cf = 80000, cr = 80000;
+    float dvy, dr;
+    float t, gx, gz;
+    t = carState.theta;
+    if(vx!=0)
+    {
+        dvy = -2*(cf+cr)/(m*vx)*vy + (2*(lr*cr-lf*cf)/(m*vx)-vx)*r + 2*cf*d/m;
+        dr = 2*(lr*cr-lf*cf)/(iz*vx)*vy - 2*(lf*lf*cf+lr*lr*cr)*r/(iz*vx) + 2*lf*cf*d/iz;
+        carBody.setLateralVelocity(vy + dvy*dt);
+        gx = -vx * std::sin(t) - lr * r * std::cos(t+d) + dvy * std::sin(t+d) * dt*0.5f;
+        gz =  vx * std::cos(t) - lr * r * std::sin(t+d) + dvy * std::cos(t+d) * dt*0.5f;
+        gx *= dt;
+        gz *= dt;
+        carState.progress(gx, gz, (r + dr*dt*0.5f), vx/wheelHeight*dt);
+    }
 }
+
 //[/MiscUserDefs]
 
 //==============================================================================
@@ -62,11 +90,12 @@ PhysicsContainer::PhysicsContainer ()
 
     //[Constructor] You can add your own custom stuff here..
     setWantsKeyboardFocus(true);
-    addCarBody(kinematicMovement, new purePursuitMethod(1.0f), Colours::red,
-               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
-    addCarBody(kinematicMovement, new centerPursuitMethod(1.0f), Colours::blue,
-               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
-    addCarBody(kinematicMovement, new centerPursuitMethod(0.8f), Colours::gold,
+    handleMethod = new ManualMethod();
+//    addCarBody(kinematicMovement, new centerPursuitMethod(0.8f), Colours::crimson,
+//               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
+//    addCarBody(kinematicMovement, new purePursuitMethod(1.0f), Colours::burlywood,
+//               0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
+    addCarBody(dynamicMovement, new centerPursuitMethod(0.8f), Colours::coral,
                0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
    // addCarBody(Colours::green, 0.31f, 1.14f, 1.56f, 0.851f, 0.85f);
     //[/Constructor]
@@ -184,7 +213,7 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
         for(i=0 ; i<carBodys.size() ; i++)
         {
             carBody = carBodys.getUnchecked(i);
-            carBody->forward(-0.01);
+            carBody->forward(-1);
         }
         return true;
     }
@@ -197,7 +226,7 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
         for(i=0 ; i<carBodys.size() ; i++)
         {
             carBody = carBodys.getUnchecked(i);
-            carBody->forward(0.01);
+            carBody->forward(1);
         }
         return true;
     }
@@ -206,7 +235,7 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
 //        stopTimer();
 //        return true;
 //    }
-    else if(key==KeyPress::leftKey)
+    else if(key.getKeyCode()=='1')
     {
         focusedCarIndex--;
         if(focusedCarIndex<0)
@@ -215,7 +244,7 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
         }
         return true;
     }
-    else if(key==KeyPress::rightKey)
+    else if(key.getKeyCode()=='2')
     {
         focusedCarIndex++;
         if(focusedCarIndex>=carBodys.size())
@@ -223,6 +252,14 @@ bool PhysicsContainer::keyPressed (const KeyPress& key)
             focusedCarIndex = 0;
         }
         return true;
+    }
+    else if(key==KeyPress::leftKey)
+    {
+        handleMethod->steer(0.05);
+    }
+    else if(key==KeyPress::rightKey)
+    {
+        handleMethod->steer(-0.05);
     }
     return false;  // Return true if your handler uses this key event, or false to allow it to be passed-on.
     //[/UserCode_keyPressed]

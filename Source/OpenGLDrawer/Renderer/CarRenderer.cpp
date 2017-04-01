@@ -143,7 +143,7 @@ const char* CarRenderer::getFragmentShader()
 }
 Matrix CarRenderer::getViewMatrix()
 {
-    return getViewMatrix(camYaw, camPitch, camAzimuth, camElevation, camDistance);
+    return getViewMatrix(camYaw, camPitch, camAzimuth + focusedCarBody->getCarState().theta, camElevation, camDistance);
 }
 Matrix CarRenderer::getViewMatrix(float camy, float camp, float cama, float came, float camd)
 {
@@ -241,7 +241,7 @@ SimRenderer(glContext, screenWidth, screenHeight),
 screenShape(glContext, 0.7, -0.7, 0.2, 0.2),
 gridShape(glContext,0.8,8),
 floorShape(glContext),
-carShape(glContext, BinaryData::avent_obj, BinaryData::avent2_mtl),
+carShape(glContext, BinaryData::avent_lowpoly_obj, BinaryData::avent2_mtl),
 wheelShape(glContext, BinaryData::aventWheel_obj, BinaryData::aventWheel_mtl),
 roadShape(glContext),
 carBodys(cb)
@@ -344,10 +344,12 @@ void CarRenderer::paintGL()
         carBody = carBodys[i];
         drawCar(carBody, carBody->getCarState());
         m = carBody->getStateHistory().size();
+        isMaterialMode->set(2);
         for(j=0 ; j<m ; j++)
         {
             drawCar(carBody, carBody->getStateHistory()[j]);
         }
+        isMaterialMode->set(1);
     }
 //    n = carStates.size();
 //    isMaterialMode->set(2);
@@ -361,7 +363,7 @@ void CarRenderer::paintGL()
 void CarRenderer::draw()
 {
     Matrix t;
-    OpenGLHelpers::clear (Colours::skyblue);
+    OpenGLHelpers::clear (Colours::darkgrey);
     shaderProgram->use();
     const float desktopScale = (float) context.getRenderingScale();
     

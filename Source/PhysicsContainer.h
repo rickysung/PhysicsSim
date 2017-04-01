@@ -67,6 +67,7 @@ private:
     //[UserVariables]   -- You can add your own custom variables in this section.
     //
     void drawGraph(Graphics& g, String name, int x, int y, int w, int h, int num, float* v);
+    ScopedPointer<ManualMethod> handleMethod;
     OwnedArray<CarBody> carBodys;
     CarBody* focusedCar;
     ScopedPointer<CarRenderer> carRenderer;
@@ -87,6 +88,7 @@ private:
 };
 
 //[EndFile] You can add extra defines here...
+
 //[/EndFile]
 
 #endif   // __JUCE_HEADER_8D3F9C171D6898DC__

@@ -77,7 +77,7 @@ struct CarState
         location.x += vx;
         location.z += vz;
         yawRate = yr;
-        theta += yawRate;
+        theta += yawRate*0.01f;
         for(i=0 ; i<4 ; i++)
             wheelAngle[i] += wheelVelocity;
     }
@@ -90,6 +90,8 @@ public:
     CarBody(void (*cm)(CarBody&, CarState&), HandleAlgorithm* ha, Colour carBodyColour, float wheelHeight, float frontWheelBase, float rearWheelBase, float frontWheel, float rearWheel);
     void progress();
     float getVelocity() { return velocity; }
+    float getLateralVelocity() { return lateralVelocity; }
+    void setLateralVelocity(float val) { lateralVelocity = val; }
     float getWheelHeight() { return wheelHeight; }
     float getFrontWheelBase() { return frontWheelBase; }
     float getRearWheelBase() { return rearWheelBase; }
@@ -123,6 +125,7 @@ private:
     const float rearWheelTrack;
     void (*controller)(CarBody&, CarState&);
     float dist = 0;
+    float lateralVelocity;
     float velocity;
     int max_save_state;
     int state_idx;
@@ -135,8 +138,8 @@ public:
     void setCarBody(CarBody* cb) override
     {
         carBody = cb;
-        sensorDistance = 5.0f;
-        sensorWidth = 2.5f;
+        sensorDistance = 4.0f;
+        sensorWidth = 3.0f;
         centerLocation = sensorWidth;
     }
 private:
@@ -188,8 +191,17 @@ private:
                 right = crossPoints[i];
         }
         centerLocation = (left + right)/2;
-        carState.handleAngle = pGain * (sensorWidth - centerLocation);
+        targetAngle = pGain * (sensorWidth - centerLocation);
+        if(std::abs(targetAngle-carState.handleAngle)<0.1)
+            carState.handleAngle = targetAngle;
+        else
+            carState.handleAngle = carState.handleAngle + (targetAngle>carState.handleAngle?0.1:-0.1);
+        if(carState.handleAngle>M_PI/3)
+            carState.handleAngle = M_PI/3;
+        else if(carState.handleAngle<-M_PI/3)
+            carState.handleAngle = -M_PI/3;
     }
+    float targetAngle;
     float centerLocation;
     float sensorDistance;
     float sensorWidth;
@@ -264,5 +276,23 @@ private:
     float sensorDistance = 0;
     float sensorWidth = 0;
 };
-
+class ManualMethod : public HandleAlgorithm
+{
+public:
+    void setCarBody(CarBody* cb) override
+    {
+        carBody = cb;
+    }
+    void steer(float a)
+    {
+        ha += a;
+    }
+private:
+    void handleProcess(Array<Vector>& points) override
+    {
+        CarState& carState = carBody->getCarState();
+        carState.handleAngle = ha;
+    }
+    float ha = 0;
+};
 #endif  // CARBODY_H_INCLUDED
